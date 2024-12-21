@@ -1,7 +1,8 @@
 import streamlit as st
 from data_loader import load_data
-from sentiment_analysis import search_sentiment_analysis
 from artist_comparison import compare_artists
+from sentiment_analysis import analyze_sentiment
+
 
 st.set_page_config(layout="wide", page_title="Rock Lyrics Dashboard", page_icon="🎸")
 
