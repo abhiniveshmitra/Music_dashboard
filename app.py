@@ -37,7 +37,7 @@ top_artists = filtered_data['artist'].value_counts().head(10)
 st.bar_chart(top_artists)
 
 # Call Sentiment Analysis and Word Cloud
-plot_sentiment_trend(filtered_data)
+#plot_sentiment_trend(filtered_data)
 generate_wordcloud(filtered_data)
 
 # Call Topic Modeling Visualization
