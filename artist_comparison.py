@@ -2,41 +2,32 @@ import streamlit as st
 import pandas as pd
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+from sentiment_analysis import analyze_sentiment, get_top_songs_by_sentiment
 
 @st.cache_data
-def get_top_songs_by_sentiment(data, artist=None):
-    if artist:
-        artist_data = data[data['artist'] == artist]
-    else:
-        artist_data = data
-
-    # Sort by sentiment and get top 3
-    top_songs = artist_data.sort_values(by='sentiment', ascending=False).head(3)[['title', 'artist', 'sentiment']]
-    return top_songs
-
 def generate_wordcloud(data, artist):
     # Filter lyrics for selected artist
     artist_lyrics = " ".join(data[data['artist'] == artist]['lyrics'].dropna())
     
     if artist_lyrics:
         wordcloud = WordCloud(width=800, height=400, background_color='black').generate(artist_lyrics)
-        
-        plt.figure(figsize=(10, 5))
-        plt.imshow(wordcloud, interpolation="bilinear")
-        plt.axis('off')
-        st.pyplot(plt)
+        st.image(wordcloud.to_array())
     else:
         st.warning(f"No lyrics available for {artist}")
 
 def compare_artists(data):
     st.subheader("🎤 Compare Two Artists")
     
+    # Ensure sentiment analysis has been performed
+    if 'sentiment' not in data.columns:
+        st.warning("Running sentiment analysis on the dataset...")
+        data = analyze_sentiment(data)
+    
     # Artist Selection
     artists = data['artist'].unique()
     artist1 = st.selectbox("Select First Artist", artists, key='artist1')
     artist2 = st.selectbox("Select Second Artist", artists, key='artist2')
 
-    # Ensure Artists are Selected
     if artist1 and artist2:
         comparison_data = data[data['artist'].isin([artist1, artist2])]
         
