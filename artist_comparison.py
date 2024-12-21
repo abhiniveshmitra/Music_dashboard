@@ -1,4 +1,4 @@
-from sentiment_analysis import analyze_sentiment, get_top_songs_by_sentiment
+from sentiment_analysis import analyze_sentiment
 import streamlit as st
 import pandas as pd
 from collections import Counter
@@ -38,13 +38,13 @@ def get_filtered_top_songs_by_sentiment(data, artist, top_n=3):
         return pd.DataFrame(columns=['title', 'sentiment', 'views']), pd.DataFrame(columns=['title', 'sentiment', 'views'])
 
     # Get top positive and negative songs
-    top_positive = filtered_data.sort_values(by='sentiment', ascending=False).head(top_n).reset_index(drop=True)
-    top_negative = filtered_data.sort_values(by='sentiment').head(top_n).reset_index(drop=True)
+    top_positive = filtered_data.sort_values(by='sentiment', ascending=False).head(top_n).drop(columns='index', errors='ignore')
+    top_negative = filtered_data.sort_values(by='sentiment').head(top_n).drop(columns='index', errors='ignore')
 
     return top_positive[['title', 'sentiment', 'views']], top_negative[['title', 'sentiment', 'views']]
 
 
-# Artist Comparison Function (Two Artists Only)
+# Artist Comparison Function (Force Two Artists)
 def compare_artists(data):
     st.title("🎸 Compare Two Rock Artists")
 
@@ -75,7 +75,7 @@ def compare_artists(data):
         .sort_values(by='views', ascending=False)
         .groupby('artist')
         .head(3)
-        .reset_index(drop=True)  # Remove index for popular songs
+        .drop(columns='index', errors='ignore')  # Remove index for popular songs
     )
     
     col1, col2 = st.columns(2)
@@ -104,20 +104,6 @@ def compare_artists(data):
         st.table(pos2)
         st.markdown(f"**Top Negative Songs by {artist2}**")
         st.table(neg2)
-
-    # Most Frequent Words
-    st.markdown("### 🔡 Most Frequently Used Words")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown(f"**Common Words by {artist1}**")
-        freq_words1 = get_most_frequent_words(comparison_data, artist1)
-        st.table(freq_words1)
-
-    with col2:
-        st.markdown(f"**Common Words by {artist2}**")
-        freq_words2 = get_most_frequent_words(comparison_data, artist2)
-        st.table(freq_words2)
 
     # Graph Section (After Data Tables)
     st.markdown("---")
