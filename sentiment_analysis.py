@@ -3,6 +3,7 @@ from textblob import TextBlob
 import streamlit as st
 import matplotlib.pyplot as plt
 
+# Sentiment Labeling Function
 def label_sentiment(score):
     if score > 0.2:
         return "Positive"
@@ -13,14 +14,30 @@ def label_sentiment(score):
 
 @st.cache_data
 def analyze_sentiment(data):
-    # Run Sentiment Analysis Only if Needed
+    # Clean Year and Convert to Numeric
+    data['year'] = data['year'].astype(str).str.replace(',', '')
+    data['year'] = pd.to_numeric(data['year'], errors='coerce')
+    
+    # Perform Sentiment Analysis if Not Already Done
     if 'sentiment' not in data.columns:
-        st.info("Running sentiment analysis on search results...")
+        st.info("Running sentiment analysis on all lyrics...")
         data['sentiment'] = data['lyrics'].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
         data['sentiment_label'] = data['sentiment'].apply(label_sentiment)
         st.success("Sentiment analysis complete.")
+    
     return data
 
+# 🎵 Get Top 3 Songs by Sentiment for Each Artist
+def get_top_songs_by_sentiment(data, artist):
+    # Filter Data for Selected Artist
+    artist_data = data[data['artist'] == artist]
+    
+    # Sort by Sentiment (Descending) and Select Top 3
+    top_songs = artist_data.sort_values(by='sentiment', ascending=False).head(3)
+    
+    return top_songs[['title', 'sentiment', 'sentiment_label']]
+
+# 🎤 Sentiment Analysis for Specific Artist or Song (Search Feature)
 def search_sentiment_analysis(data):
     st.subheader("🎤 Sentiment Analysis for Artist or Song")
     
