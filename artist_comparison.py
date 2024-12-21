@@ -12,12 +12,16 @@ stop_words = set([
     "about", "can't", "yeah,", "right", "every", "little"
 ])
 
+
+# Top Songs by Sentiment
 def get_top_songs_by_sentiment(data, artist, top_n=3):
     artist_data = data[data['artist'] == artist]
     top_positive = artist_data.sort_values(by='sentiment', ascending=False).head(top_n)
     top_negative = artist_data.sort_values(by='sentiment').head(top_n)
     return top_positive[['title', 'sentiment']], top_negative[['title', 'sentiment']]
 
+
+# Most Frequent Words
 def get_most_frequent_words(data, artist, top_n=10):
     artist_lyrics = " ".join(data[data['artist'] == artist]['lyrics'].dropna())
     words = artist_lyrics.split()
@@ -28,6 +32,8 @@ def get_most_frequent_words(data, artist, top_n=10):
     most_common = Counter(filtered_words).most_common(top_n)
     return pd.DataFrame(most_common, columns=['Word', 'Frequency'])
 
+
+# Artist Comparison Main Function
 def compare_artists(data):
     st.title("🎸 Compare Two Rock Artists")
 
@@ -73,7 +79,9 @@ def compare_artists(data):
     # Lexical Complexity
     st.markdown("#### 📚 Lexical Complexity Analysis")
     st.info("**Lexical Complexity:** Evaluates the diversity of vocabulary used by each artist.")
-    comparison_data['lexical_diversity'] = comparison_data['lyrics'].apply(lambda x: len(set(str(x).split())) / len(str(x).split()))
+    comparison_data['lexical_diversity'] = comparison_data['lyrics'].apply(
+        lambda x: len(set(str(x).split())) / len(str(x).split()) if len(str(x).split()) > 0 else 0
+    )
     lexical_comparison = comparison_data.groupby('artist')['lexical_diversity'].mean()
     st.bar_chart(lexical_comparison)
 
