@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from collections import Counter
+from nltk.corpus import stopwords
 from sentiment_analysis import analyze_sentiment, get_top_songs_by_sentiment
 
 # Lexical Complexity Analysis
@@ -11,13 +12,18 @@ def lexical_complexity_analysis(data, artist):
     artist_data['lexical_diversity'] = artist_data['lyrics'].apply(lambda x: len(set(str(x).split())) / len(str(x).split()))
     avg_diversity = artist_data['lexical_diversity'].mean()
     
-    return avg_diversity
+    return artist_data[['year', 'lexical_diversity']].groupby('year').mean(), avg_diversity
 
-# Most Frequently Used Words
+# Most Frequently Used Words (Filter Short Words + Stopwords)
 def get_most_frequent_words(data, artist, top_n=10):
     artist_lyrics = " ".join(data[data['artist'] == artist]['lyrics'].dropna())
     words = artist_lyrics.split()
-    most_common = Counter(words).most_common(top_n)
+
+    # Remove short words (1-3 letters) and stopwords
+    stop_words = set(stopwords.words('english'))
+    filtered_words = [word.lower() for word in words if len(word) > 3 and word.lower() not in stop_words]
+
+    most_common = Counter(filtered_words).most_common(top_n)
     
     return pd.DataFrame(most_common, columns=['Word', 'Frequency'])
 
@@ -54,8 +60,10 @@ def compare_artists(data):
             st.write(f"**Average Sentiment:** {avg_sentiment:.2f}")
             explain_sentiment(avg_sentiment)
 
-            lexical_complexity = lexical_complexity_analysis(comparison_data, artist1)
+            # Lexical Complexity Analysis
+            lexical_trend, lexical_complexity = lexical_complexity_analysis(comparison_data, artist1)
             st.write(f"**Lexical Complexity:** {lexical_complexity:.2f}")
+            st.line_chart(lexical_trend, color=["#FF5733"])
 
             st.write("### Most Frequently Used Words")
             freq_words = get_most_frequent_words(comparison_data, artist1)
@@ -74,8 +82,9 @@ def compare_artists(data):
             st.write(f"**Average Sentiment:** {avg_sentiment:.2f}")
             explain_sentiment(avg_sentiment)
 
-            lexical_complexity = lexical_complexity_analysis(comparison_data, artist2)
+            lexical_trend, lexical_complexity = lexical_complexity_analysis(comparison_data, artist2)
             st.write(f"**Lexical Complexity:** {lexical_complexity:.2f}")
+            st.line_chart(lexical_trend, color=["#4B9CD3"])
 
             st.write("### Most Frequently Used Words")
             freq_words = get_most_frequent_words(comparison_data, artist2)
@@ -87,12 +96,12 @@ def compare_artists(data):
             st.write("### Top Negative Songs")
             st.table(top_neg[['title', 'sentiment', 'views']].reset_index(drop=True))
 
-        # Enhanced Sentiment Over Time Visualization
+        # Sentiment Over Time Visualization
         st.subheader("📈 Sentiment Comparison Over Time")
         sentiment_by_year = comparison_data.groupby(['year', 'artist'])['sentiment'].mean().unstack()
         st.line_chart(sentiment_by_year.loc[artist_years], color=["#FF5733", "#4B9CD3"])
 
-        # Enhanced Popularity Over Time (Views)
+        # Popularity Over Time (Views)
         st.subheader("📊 Popularity Over Time (by Views)")
         views_by_year = comparison_data.groupby(['year', 'artist'])['views'].sum().unstack()
         st.bar_chart(views_by_year.loc[artist_years], color=["#1F77B4", "#FF7F0E"])
