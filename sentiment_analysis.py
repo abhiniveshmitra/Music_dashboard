@@ -1,65 +1,43 @@
+import streamlit as st
 import pandas as pd
 from textblob import TextBlob
-import streamlit as st
-import matplotlib.pyplot as plt
-
-# Sentiment Labeling Function
-def label_sentiment(score):
-    if score > 0.2:
-        return "Positive"
-    elif score < -0.2:
-        return "Negative"
-    else:
-        return "Neutral"
 
 @st.cache_data
 def analyze_sentiment(data):
-    # Clean Year and Convert to Numeric
-    data['year'] = data['year'].astype(str).str.replace(',', '')
-    data['year'] = pd.to_numeric(data['year'], errors='coerce')
-    
-    # Perform Sentiment Analysis if Not Already Done
-    if 'sentiment' not in data.columns:
-        st.info("Running sentiment analysis on all lyrics...")
-        data['sentiment'] = data['lyrics'].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
-        data['sentiment_label'] = data['sentiment'].apply(label_sentiment)
-        st.success("Sentiment analysis complete.")
-    
+    data['sentiment'] = data['lyrics'].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
     return data
 
-# 🎵 Get Top 3 Songs by Sentiment for Each Artist
-def get_top_songs_by_sentiment(data, artist):
-    # Filter Data for Selected Artist
-    artist_data = data[data['artist'] == artist]
-    
-    # Sort by Sentiment (Descending) and Select Top 3
-    top_songs = artist_data.sort_values(by='sentiment', ascending=False).head(3)
-    
-    return top_songs[['title', 'sentiment', 'sentiment_label']]
-
-# 🎤 Sentiment Analysis for Specific Artist or Song (Search Feature)
 def search_sentiment_analysis(data):
-    st.subheader("🎤 Sentiment Analysis for Artist or Song")
+    st.subheader("🎼 Sentiment Analysis of Song or Artist")
     
-    search_query = st.text_input("Enter Artist or Song Title", "")
+    # Dropdown for Artist or Song Analysis
+    option = st.selectbox("Choose to Analyze by", ["Select", "Artist", "Song"])
+    
+    if option == "Select":
+        st.info("Select Artist or Song to analyze sentiment.")
+        return
 
-    if search_query:
-        result = data[
-            (data['artist'].str.contains(search_query, case=False, na=False)) |
-            (data['title'].str.contains(search_query, case=False, na=False))
-        ]
-        
-        if not result.empty:
-            # Perform Sentiment Analysis Only on Search Results
-            result = analyze_sentiment(result)
-            
-            st.subheader(f"🎵 Sentiment for {search_query}")
-            fig, ax = plt.subplots(figsize=(10, 5))
-            ax.bar(result['title'], result['sentiment'], color='tab:blue')
-            ax.set_xlabel("Song Title")
-            ax.set_ylabel("Sentiment Score")
-            ax.set_title(f"Sentiment Analysis for '{search_query}'")
-            plt.xticks(rotation=45, ha='right')
-            st.pyplot(fig)
-        else:
-            st.warning(f"No results found for '{search_query}'. Try another search.")
+    if option == "Artist":
+        artist = st.selectbox("Select Artist", data['artist'].unique(), key="artist_sent")
+        filtered = data[data['artist'] == artist]
+    else:
+        song = st.selectbox("Select Song", data['title'].unique(), key="song_sent")
+        filtered = data[data['title'] == song]
+
+    if filtered.empty:
+        st.warning("No data found for selection.")
+        return
+
+    # Ensure Sentiment Column Exists
+    if 'sentiment' not in filtered.columns:
+        filtered = analyze_sentiment(filtered)
+
+    # Display Results
+    st.write(f"**Sentiment Distribution for {artist if option == 'Artist' else song}:**")
+    st.bar_chart(filtered['sentiment'])
+
+    # Sentiment Meaning
+    st.markdown("**Sentiment Interpretation:**")
+    st.write("- **Positive (0.1 to 1.0):** Joyful, upbeat songs.")
+    st.write("- **Neutral (-0.1 to 0.1):** Calm, factual, or ambiguous.")
+    st.write("- **Negative (-1.0 to -0.1):** Sad, dark, or aggressive tones.")
