@@ -3,33 +3,29 @@ import pandas as pd
 import gdown
 from io import BytesIO
 from zipfile import ZipFile
-import requests
+import os
 
 @st.cache_data
 def load_data():
-    # Google Drive ZIP file ID (Replace with the new file ID)
+    # Google Drive ZIP file ID
     file_id = "1bw3EvezRiUj9sV3vTT6OtY840pxcPpW1"
-    url = f"https://drive.google.com/uc?id={file_id}"
+    zip_output = 'ezyzip.zip'
+    csv_output = 'filtered_rock_1950_2000_cleaned.csv'
     
-    # Stream the ZIP file from Google Drive
-    response = requests.get(url, stream=True)
-    if response.status_code == 200:
-        with ZipFile(BytesIO(response.content)) as zip_ref:
-            # Extract CSV filename from ZIP
-            csv_filename = [f for f in zip_ref.namelist() if f.endswith('.csv')][0]
-            with zip_ref.open(csv_filename) as file:
-                data = pd.read_csv(file)  # Load CSV directly into pandas
-            st.success(f"Loaded {csv_filename} successfully!")
-            return data
-    else:
-        st.error("Failed to download the file.")
-        return pd.DataFrame()  # Return empty DataFrame if download fails
+    # Use gdown to bypass Google Drive virus scan warning
+    if not os.path.exists(csv_output):
+        gdown.download(f'https://drive.google.com/uc?id={file_id}&confirm=t', zip_output, quiet=False)
 
-# Load the dataset
+        # Unzip the file
+        with ZipFile(zip_output, 'r') as zip_ref:
+            zip_ref.extractall()
+            st.success("File unzipped successfully!")
+
+    # Load CSV
+    return pd.read_csv(csv_output)
+
+# Load data
 data = load_data()
-
-# Debugging: Display columns
-st.write("Columns in DataFrame:", data.columns.tolist())
 
 # Title and Description
 st.title("🎸 Rock Lyrics Analysis Dashboard")
