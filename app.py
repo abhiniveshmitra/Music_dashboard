@@ -1,24 +1,34 @@
 import streamlit as st
 import pandas as pd
 import gdown
+from io import BytesIO
+from zipfile import ZipFile
+import requests
 
 @st.cache_data
 def load_data():
-    file_id = "1BQqV3fdFJYVQU8qhfhwAjn5DDQ2SBHhR"
+    # Google Drive ZIP file ID (Replace with the new file ID)
+    file_id = "1bw3EvezRiUj9sV3vTT6OtY840pxcPpW1"
     url = f"https://drive.google.com/uc?id={file_id}"
-    output = 'filtered_rock_1950_2000_cleaned.csv'
-
-    # Download the file if not found locally
-    try:
-        return pd.read_csv(output)  # Load locally if it exists
-    except FileNotFoundError:
-        gdown.download(url, output, quiet=False)
-        return pd.read_csv(output)  # Load after download
+    
+    # Stream the ZIP file from Google Drive
+    response = requests.get(url, stream=True)
+    if response.status_code == 200:
+        with ZipFile(BytesIO(response.content)) as zip_ref:
+            # Extract CSV filename from ZIP
+            csv_filename = [f for f in zip_ref.namelist() if f.endswith('.csv')][0]
+            with zip_ref.open(csv_filename) as file:
+                data = pd.read_csv(file)  # Load CSV directly into pandas
+            st.success(f"Loaded {csv_filename} successfully!")
+            return data
+    else:
+        st.error("Failed to download the file.")
+        return pd.DataFrame()  # Return empty DataFrame if download fails
 
 # Load the dataset
 data = load_data()
 
-# Debug: Check Columns
+# Debugging: Display columns
 st.write("Columns in DataFrame:", data.columns.tolist())
 
 # Title and Description
