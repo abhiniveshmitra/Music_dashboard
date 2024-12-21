@@ -3,15 +3,19 @@ import streamlit as st
 import pandas as pd
 from collections import Counter
 
-# Stopwords List
+# Updated Stopwords List
 stop_words = set([
     "the", "and", "is", "in", "it", "of", "to", "on", "that", "this", "for",
     "with", "as", "was", "at", "by", "from", "which", "an", "be", "or", "are",
     "but", "if", "then", "so", "such", "there", "has", "have", "had", "a", "he",
     "she", "they", "we", "you", "your", "our", "my", "their", "its", "out", "not",
     "well,", "don't", "where", "never", "you're", "gonna", "going", "could",
-    "about", "can't", "yeah,", "right", "every", "little","you’re","don’t","ain’t","can’t"
+    "about", "can't", "yeah,", "right", "every", "little", "you’re", "don’t", "ain’t", "can’t"
 ])
+
+# Convert Year to Decade
+def to_decade(year):
+    return (year // 10) * 10
 
 
 # Frequent Words Analysis (1-based indexing)
@@ -21,32 +25,58 @@ def get_most_frequent_words(data, artist, top_n=10):
     filtered_words = [word.lower() for word in words if len(word) > 4 and word.lower() not in stop_words]
     most_common = Counter(filtered_words).most_common(top_n)
     df = pd.DataFrame(most_common, columns=['Word', 'Frequency'])
-    df.index = df.index + 1  # 1-based indexing
+    df.index = df.index + 1  # 1-based indexing for frequent words only
     return df
 
 
-# Artist Comparison Function
+# Top Songs by Sentiment (Minimum Views Filter)
+def get_filtered_top_songs_by_sentiment(data, artist, top_n=3):
+    filtered_data = data[(data['artist'] == artist) & (data['views'] >= 1000)]
+
+    # Handle empty result after filtering
+    if filtered_data.empty:
+        return pd.DataFrame(columns=['title', 'sentiment', 'views']), pd.DataFrame(columns=['title', 'sentiment', 'views'])
+
+    # Get top positive and negative songs
+    top_positive = filtered_data.sort_values(by='sentiment', ascending=False).head(top_n).reset_index(drop=True)
+    top_negative = filtered_data.sort_values(by='sentiment').head(top_n).reset_index(drop=True)
+
+    return top_positive[['title', 'sentiment', 'views']], top_negative[['title', 'sentiment', 'views']]
+
+
+# Artist Comparison Function (Two Artists Only)
 def compare_artists(data):
     st.title("🎸 Compare Two Rock Artists")
 
-    col1, col2 = st.columns(2)
+    # Select Two Artists Only
+    artist_options = data['artist'].unique()
+    selected_artists = st.multiselect("Select Two Artists to Compare", artist_options, default=artist_options[:2], max_selections=2)
 
-    with col1:
-        artist1 = st.selectbox("Select First Artist", data['artist'].unique())
+    if len(selected_artists) != 2:
+        st.warning("Please select exactly **two artists** for comparison.")
+        return
 
-    with col2:
-        artist2 = st.selectbox("Select Second Artist", data['artist'].unique(), index=1)
+    artist1, artist2 = selected_artists
 
     # Filter Data for Comparison
-    comparison_data = data[(data['artist'] == artist1) | (data['artist'] == artist2)]
+    comparison_data = data[data['artist'].isin([artist1, artist2])]
 
     # Ensure Sentiment is Calculated
     if 'sentiment' not in comparison_data.columns:
         comparison_data = analyze_sentiment(comparison_data)
 
-    # Display Popular Songs
+    # Convert Year to Decade for Grouping
+    comparison_data['decade'] = comparison_data['year'].apply(to_decade)
+
+    # Display Popular Songs (Minimum 1000 views)
     st.markdown("### 🔥 Most Popular Songs (Top 3 by Views)")
-    popular_songs = comparison_data.sort_values(by='views', ascending=False).groupby('artist').head(3)
+    popular_songs = (
+        comparison_data[comparison_data['views'] >= 1000]
+        .sort_values(by='views', ascending=False)
+        .groupby('artist')
+        .head(3)
+        .reset_index(drop=True)  # Remove index for popular songs
+    )
     
     col1, col2 = st.columns(2)
     with col1:
@@ -58,22 +88,22 @@ def compare_artists(data):
         st.table(popular_songs[popular_songs['artist'] == artist2][['title', 'views']])
 
     # Positive/Negative Songs
-    st.markdown("### 🎵 Top Positive and Negative Songs")
-    pos1, neg1 = get_top_songs_by_sentiment(comparison_data, artist1)
-    pos2, neg2 = get_top_songs_by_sentiment(comparison_data, artist2)
+    st.markdown("### 🎵 Top Positive and Negative Songs (Min. 1000 Views)")
+    pos1, neg1 = get_filtered_top_songs_by_sentiment(comparison_data, artist1)
+    pos2, neg2 = get_filtered_top_songs_by_sentiment(comparison_data, artist2)
 
     col1, col2 = st.columns(2)
     with col1:
         st.markdown(f"**Top Positive Songs by {artist1}**")
-        st.table(pos1[['title', 'views', 'sentiment']])
+        st.table(pos1)
         st.markdown(f"**Top Negative Songs by {artist1}**")
-        st.table(neg1[['title', 'views', 'sentiment']])
+        st.table(neg1)
 
     with col2:
         st.markdown(f"**Top Positive Songs by {artist2}**")
-        st.table(pos2[['title', 'views', 'sentiment']])
+        st.table(pos2)
         st.markdown(f"**Top Negative Songs by {artist2}**")
-        st.table(neg2[['title', 'views', 'sentiment']])
+        st.table(neg2)
 
     # Most Frequent Words
     st.markdown("### 🔡 Most Frequently Used Words")
@@ -92,18 +122,15 @@ def compare_artists(data):
     # Graph Section (After Data Tables)
     st.markdown("---")
 
-    # Sentiment Over Time Plot
-    st.markdown("### 📈 Sentiment Over Time")
-    st.info("**Sentiment Analysis:** Measures the positivity/negativity of lyrics over the years.")
-    sentiment_by_year = comparison_data.groupby(['year', 'artist'])['sentiment'].mean().unstack().fillna(0)
-    st.line_chart(sentiment_by_year, color=["#32CD32", "#FF6347"])
+    # Sentiment Over Decades Plot
+    st.markdown("### 📈 Sentiment Over Decades")
+    sentiment_by_decade = comparison_data.groupby(['decade', 'artist'])['sentiment'].mean().unstack().fillna(0)
+    st.line_chart(sentiment_by_decade, color=["#32CD32", "#FF6347"])
 
-    # Lexical Complexity Over Time Plot
-    st.markdown("### 📚 Lexical Complexity Over Time")
-    st.info("**Lexical Complexity:** Measures vocabulary diversity over the years for both artists.")
-    
+    # Lexical Complexity Over Decades Plot
+    st.markdown("### 📚 Lexical Complexity Over Decades")
     comparison_data['lexical_diversity'] = comparison_data['lyrics'].apply(
         lambda x: len(set(str(x).split())) / len(str(x).split())
     )
-    lexical_by_year = comparison_data.groupby(['year', 'artist'])['lexical_diversity'].mean().unstack().fillna(0)
-    st.line_chart(lexical_by_year, color=["#1E90FF", "#FFA500"])
+    lexical_by_decade = comparison_data.groupby(['decade', 'artist'])['lexical_diversity'].mean().unstack().fillna(0)
+    st.line_chart(lexical_by_decade, color=["#1E90FF", "#FFA500"])
