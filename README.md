@@ -1,6 +1,9 @@
 🎸 Rock Lyrics Analysis Dashboard
+
 Explore the Evolution of Rock Music (1950-2000)
+
 📌 Project Overview
+
 The Rock Lyrics Analysis Dashboard is an interactive tool designed to analyze the evolution of rock music between 1950 and 2000. It provides insights into lyrical sentiment, word frequency, and artist comparisons. The dashboard allows users to filter songs by decade, compare artists, and visualize trends in rock music over time.
 
 Key features include:
