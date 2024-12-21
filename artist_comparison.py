@@ -11,9 +11,9 @@ stop_words = set([
     "she", "they", "we", "you", "your", "our", "my", "their", "its", "out", "not"
 ])
 
-# Dynamic color generator
+# Dynamic color generator (Neon Green & Red)
 def generate_colors(n):
-    base_colors = ["#FF5733", "#4B9CD3", "#1F77B4", "#FF7F0E", "#2CA02C", "#D62728"]
+    base_colors = ["#39FF14", "#FF073A"]  # Neon Green & Red
     return base_colors[:n] + ["#6A0DAD"] * (n - len(base_colors))
 
 # Lexical Complexity Analysis
@@ -49,15 +49,15 @@ def compare_artists(data):
 
     if artist1 and artist2:
         comparison_data = data[data['artist'].isin([artist1, artist2])]
-        
-        # Ensure sentiment analysis
         comparison_data = analyze_sentiment(comparison_data)
-        comparison_data = comparison_data[['title', 'artist', 'sentiment', 'views', 'year', 'lyrics']]
 
+        # Filter columns and keep necessary fields
+        comparison_data = comparison_data[['title', 'artist', 'sentiment', 'views', 'year', 'lyrics']]
         artist_years = comparison_data['year'].unique()
 
         col1, col2 = st.columns(2)
 
+        # Artist 1 Section
         with col1:
             st.write(f"## 🎵 {artist1}")
             avg_sentiment = comparison_data[comparison_data['artist'] == artist1]['sentiment'].mean()
@@ -66,12 +66,21 @@ def compare_artists(data):
 
             lexical_trend, lexical_complexity = lexical_complexity_analysis(comparison_data, artist1)
             st.write(f"**Lexical Complexity:** {lexical_complexity:.2f}")
-            st.line_chart(lexical_trend, color=["#FF5733"])
+            st.line_chart(lexical_trend, color=["#39FF14"])
 
-            st.write("### Most Frequently Used Words")
-            freq_words = get_most_frequent_words(comparison_data, artist1)
-            st.table(freq_words)
+            # Most Positive, Negative, and Popular Songs
+            top_pos, top_neg = get_top_songs_by_sentiment(comparison_data, artist1)
+            st.write("### Top Positive Songs")
+            st.table(top_pos[['title', 'sentiment', 'views']].reset_index(drop=True))
 
+            st.write("### Top Negative Songs")
+            st.table(top_neg[['title', 'sentiment', 'views']].reset_index(drop=True))
+
+            st.write("### Most Popular Song")
+            most_popular = comparison_data[comparison_data['artist'] == artist1].nlargest(1, 'views')
+            st.table(most_popular[['title', 'views', 'year']].reset_index(drop=True))
+
+        # Artist 2 Section
         with col2:
             st.write(f"## 🎵 {artist2}")
             avg_sentiment = comparison_data[comparison_data['artist'] == artist2]['sentiment'].mean()
@@ -80,11 +89,18 @@ def compare_artists(data):
 
             lexical_trend, lexical_complexity = lexical_complexity_analysis(comparison_data, artist2)
             st.write(f"**Lexical Complexity:** {lexical_complexity:.2f}")
-            st.line_chart(lexical_trend, color=["#4B9CD3"])
+            st.line_chart(lexical_trend, color=["#FF073A"])
 
-            st.write("### Most Frequently Used Words")
-            freq_words = get_most_frequent_words(comparison_data, artist2)
-            st.table(freq_words)
+            top_pos, top_neg = get_top_songs_by_sentiment(comparison_data, artist2)
+            st.write("### Top Positive Songs")
+            st.table(top_pos[['title', 'sentiment', 'views']].reset_index(drop=True))
+
+            st.write("### Top Negative Songs")
+            st.table(top_neg[['title', 'sentiment', 'views']].reset_index(drop=True))
+
+            st.write("### Most Popular Song")
+            most_popular = comparison_data[comparison_data['artist'] == artist2].nlargest(1, 'views')
+            st.table(most_popular[['title', 'views', 'year']].reset_index(drop=True))
 
         # Sentiment Over Time Visualization
         st.subheader("📈 Sentiment Comparison Over Time")
