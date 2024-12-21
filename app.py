@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from loader import load_data
-from sentiment_analysis import search_sentiment_analysis
+from sentiment_analysis import search_sentiment_analysis, analyze_sentiment
 from artist_comparison import compare_artists
 
 # --------------------
@@ -36,36 +36,12 @@ filtered_data = filtered_data[filtered_data['lyric_length'] <= word_count_filter
 
 if selected_artists and len(selected_artists) == 2:
     filtered_data = filtered_data[filtered_data['artist'].isin(selected_artists)]
+
+    # Ensure Sentiment is Applied
+    if 'sentiment' not in filtered_data.columns:
+        filtered_data = analyze_sentiment(filtered_data)
+
+    # Perform Artist Comparison
+    compare_artists(filtered_data)
 else:
     st.sidebar.error("Please select exactly **two artists** for comparison.")
-
-# --------------------
-# Title and Main Section
-# --------------------
-st.title("🎸 Rock Lyrics Analysis Dashboard")
-st.write("Explore rock music from 1950 to 2000 through sentiment analysis, word clouds, and artist comparisons.")
-
-# --------------------
-# Visualization 1 – Yearly Song Distribution
-# --------------------
-st.subheader("🎵 Number of Rock Songs by Year")
-yearly_counts = filtered_data.groupby('year').size()
-st.bar_chart(yearly_counts)
-
-# --------------------
-# Visualization 2 – Top Artists
-# --------------------
-st.subheader("🎤 Top 10 Artists by Number of Songs")
-top_artists = filtered_data['artist'].value_counts().head(10)
-st.bar_chart(top_artists)
-
-# --------------------
-# Sentiment Analysis
-# --------------------
-search_sentiment_analysis(filtered_data)
-
-# --------------------
-# Artist Comparison
-# --------------------
-if len(selected_artists) == 2:
-    compare_artists(filtered_data)
