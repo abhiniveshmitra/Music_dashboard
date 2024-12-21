@@ -4,9 +4,29 @@ import pandas as pd
 
 @st.cache_data
 def analyze_sentiment(data):
-    # Apply sentiment analysis to the lyrics column
-    data['sentiment'] = data['lyrics'].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
+    # Apply sentiment analysis if not already calculated
+    if 'sentiment' not in data.columns:
+        data['sentiment'] = data['lyrics'].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
     return data
+
+def get_top_songs_by_sentiment(data, artist_name=None):
+    # Filter by artist if specified
+    if artist_name:
+        filtered_data = data[data['artist'] == artist_name]
+    else:
+        filtered_data = data
+    
+    if filtered_data.empty:
+        return pd.DataFrame(columns=['title', 'artist', 'sentiment'])
+    
+    # Ensure sentiment analysis is applied
+    filtered_data = analyze_sentiment(filtered_data)
+
+    # Get top 3 positive and top 3 negative songs
+    top_positive = filtered_data.nlargest(3, 'sentiment')[['title', 'artist', 'sentiment']]
+    top_negative = filtered_data.nsmallest(3, 'sentiment')[['title', 'artist', 'sentiment']]
+    
+    return top_positive, top_negative
 
 @st.cache_data
 def search_sentiment_analysis(data):
@@ -28,19 +48,18 @@ def search_sentiment_analysis(data):
         st.warning("No data available for the selection.")
     else:
         # Perform sentiment analysis
-        if 'sentiment' not in filtered_data.columns:
-            st.warning("Running sentiment analysis...")
-            filtered_data = analyze_sentiment(filtered_data)
+        filtered_data = analyze_sentiment(filtered_data)
 
         # Display Results
         st.write("### Sentiment Breakdown")
         st.dataframe(filtered_data[['title', 'artist', 'sentiment']])
 
-        # Highlight Top 3 Positive and Negative Songs
+        # Top 3 Positive/Negative Songs for Selected Artist
+        st.write("#### 🎵 Top 3 Positive and Negative Songs")
+        top_positive, top_negative = get_top_songs_by_sentiment(data, artist_choice)
+
         st.write("#### 🎵 Top 3 Positive Songs")
-        top_positive = filtered_data.nlargest(3, 'sentiment')[['title', 'sentiment']]
         st.table(top_positive)
 
         st.write("#### 😢 Top 3 Negative Songs")
-        top_negative = filtered_data.nsmallest(3, 'sentiment')[['title', 'sentiment']]
         st.table(top_negative)
