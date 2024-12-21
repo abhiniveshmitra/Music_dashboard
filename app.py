@@ -23,6 +23,7 @@ filtered_data = analyze_sentiment(filtered_data)
 
 # Artist Sentiment Search
 search_sentiment_analysis(filtered_data)
+
 # Expanded Artist Comparison
 if st.button("Compare Artists"):
     compare_artists(filtered_data)
