@@ -1,19 +1,14 @@
 import streamlit as st
 from data_loader import load_data
-from sentiment_analysis import (
-    plot_complexity_vs_sentiment,
-    analyze_sentiment,
-    calculate_lyric_complexity
-)
+from sentiment_analysis import search_sentiment_analysis, analyze_sentiment
 from artist_comparison import compare_artists
 
-# Page Config
 st.set_page_config(layout="wide", page_title="Rock Lyrics Dashboard", page_icon="🎸")
 
 data = load_data()
 
 st.title("🎸 Rock Lyrics Analysis Dashboard")
-st.write("Explore rock music from 1950 to 2000 through lyrics analysis, sentiment, and complexity.")
+st.write("Explore rock music through sentiment analysis, artist comparisons, and lyrical insights.")
 
 # Sidebar Filters
 if 'year' in data.columns:
@@ -23,13 +18,12 @@ else:
 
 filtered_data = data[data['year'].isin(decades)] if 'year' in data.columns else data
 
-# 🛠️ Apply Sentiment and Complexity Analysis Before Plotting
+# Apply Sentiment Analysis Before Comparison
 filtered_data = analyze_sentiment(filtered_data)
-filtered_data = calculate_lyric_complexity(filtered_data)
 
-# Visualization Buttons
-if st.button("Analyze Lyric Complexity"):
-    plot_complexity_vs_sentiment(filtered_data)
+# Artist Sentiment Search
+search_sentiment_analysis(filtered_data)
 
+# Expanded Artist Comparison
 if st.button("Compare Artists"):
     compare_artists(filtered_data)
