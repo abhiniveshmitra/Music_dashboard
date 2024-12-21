@@ -105,13 +105,6 @@ st.markdown("Here are the top 10 artists with the highest number of rock songs i
 top_artists = filtered_data['artist'].value_counts().head(10)
 st.bar_chart(top_artists)
 
-# --------------------
-# Sentiment Analysis Section
-# --------------------
-st.subheader("🎭 Sentiment Analysis of Rock Lyrics")
-st.markdown("Analyze the emotional tone of rock lyrics over the years. This section reveals whether the music was uplifting, dark, or neutral.")
-
-search_sentiment_analysis(filtered_data)
 
 # --------------------
 # Artist Comparison Section (Remove Duplicate)
