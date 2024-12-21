@@ -3,6 +3,7 @@ from gensim import corpora
 import pyLDAvis.gensim_models as gensimvis
 import pyLDAvis
 import streamlit as st
+import streamlit.components.v1 as components
 import random
 
 @st.cache_data
@@ -29,6 +30,10 @@ def display_lda_topics(data):
     if st.button("Run Topic Modeling", key="lda_button"):
         with st.spinner("Running LDA Topic Modeling... This may take a few moments"):
             lda_vis = perform_lda(data, num_topics)
-            pyLDAvis.save_html(lda_vis, 'lda_vis.html')
+
+            # Convert LDA visualization to HTML
+            html_vis = pyLDAvis.prepared_data_to_html(lda_vis)
+            
+            # Display directly in Streamlit
+            components.html(html_vis, height=800, scrolling=True)
             st.success("LDA Visualization complete!")
-            st.write("🔗 [View LDA Topic Visualization](lda_vis.html)")
