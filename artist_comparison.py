@@ -2,16 +2,14 @@ import streamlit as st
 import pandas as pd
 from collections import Counter
 from sentiment_analysis import analyze_sentiment, get_top_songs_by_sentiment
-import nltk
-from nltk.corpus import stopwords
 
-# Download stopwords dynamically if not already present
-try:
-    stop_words = set(stopwords.words('english'))
-except:
-    nltk.download('stopwords')
-    stop_words = set(stopwords.words('english'))
-
+# Manual stopwords list (no NLTK required)
+stop_words = set([
+    "the", "and", "is", "in", "it", "of", "to", "on", "that", "this", "for",
+    "with", "as", "was", "at", "by", "from", "which", "an", "be", "or", "are",
+    "but", "if", "then", "so", "such", "there", "has", "have", "had", "a", "he",
+    "she", "they", "we", "you", "your", "our", "my", "their", "its", "out", "not"
+])
 
 # Lexical Complexity Analysis
 def lexical_complexity_analysis(data, artist):
@@ -30,8 +28,11 @@ def get_most_frequent_words(data, artist, top_n=10):
     artist_lyrics = " ".join(data[data['artist'] == artist]['lyrics'].dropna())
     words = artist_lyrics.split()
 
-    # Remove short words (1-3 letters) and stopwords
-    filtered_words = [word.lower() for word in words if len(word) > 3 and word.lower() not in stop_words]
+    # Remove words with <= 4 letters and stopwords
+    filtered_words = [
+        word.lower() for word in words 
+        if len(word) > 4 and word.lower() not in stop_words
+    ]
 
     most_common = Counter(filtered_words).most_common(top_n)
     
