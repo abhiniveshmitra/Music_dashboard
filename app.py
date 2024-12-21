@@ -18,7 +18,7 @@ else:
 
 filtered_data = data[data['year'].isin(decades)] if 'year' in data.columns else data
 
-# Artist Sentiment Search (Lazy Execution - No Sentiment Until Search)
+# Artist Sentiment Search
 search_sentiment_analysis(filtered_data)
 
 # Expanded Artist Comparison (Sentiment Applied Only on Button Click)
