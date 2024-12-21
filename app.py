@@ -4,11 +4,13 @@ from sentiment_analysis import plot_sentiment_trend
 from wordcloud_generator import display_wordcloud
 from topic_modeling import display_lda_topics
 
-# Load Data (Batch Process for Large CSV)
+# Page Configuration (Must be at the top)
+st.set_page_config(layout="wide", page_title="Rock Lyrics Dashboard", page_icon="🎸")
+
+# Load Data
 data = load_data()
 
 # Title and Description
-st.set_page_config(layout="wide", page_title="Rock Lyrics Dashboard", page_icon="🎸")
 st.title("🎸 Rock Lyrics Analysis Dashboard")
 st.write("Explore rock music from 1950 to 2000 through lyrics analysis, sentiment, and topic modeling.")
 
@@ -21,7 +23,7 @@ if 'year' in data.columns:
 else:
     st.sidebar.warning("Column 'year' not found. Please check the CSV structure.")
 
-# Apply Filters (Limit Data During Startup)
+# Apply Filters
 filtered_data = data[data['year'].isin(decades)] if 'year' in data.columns else data
 filtered_data = filtered_data[filtered_data['lyric_length'] <= word_count_filter]
 if selected_artist:
