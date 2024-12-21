@@ -1,51 +1,74 @@
-🎸 Rock Lyrics Analysis Dashboard
+# 🎸 Rock Lyrics Analysis Dashboard  
+### Explore the Evolution of Rock Music (1950-2000)  
 
-Explore the Evolution of Rock Music (1950-2000)
+## 📌 Project Overview  
+The **Rock Lyrics Analysis Dashboard** leverages **Natural Language Processing (NLP)** to explore the evolution of rock music between **1950 and 2000**. This interactive tool analyzes lyrical sentiment, word frequency, and artist comparisons to uncover trends in emotional tone, vocabulary diversity, and artist popularity.  
 
-📌 Project Overview
+By applying **NLP techniques** to lyrical data, this project reveals how **rock music's themes, moods, and complexity** have shifted over the decades.  
 
-The Rock Lyrics Analysis Dashboard is an interactive tool designed to analyze the evolution of rock music between 1950 and 2000. It provides insights into lyrical sentiment, word frequency, and artist comparisons. The dashboard allows users to filter songs by decade, compare artists, and visualize trends in rock music over time.
+---
 
-Key features include:
+## 📊 Dataset Information  
+- The dataset was **sourced from Kaggle**, containing song lyrics scraped from **Genius.com**.  
+- The original dataset was preprocessed to filter **rock songs** from **1950 to 2000**, resulting in a **cleaned CSV** for analysis.  
 
-Sentiment Analysis of rock lyrics to identify emotional trends.
+---
 
-Visualization of Song Distribution over the years.
+## 🚀 Features  
+### 🎵 1. Yearly Song Distribution  
+- Displays the **number of rock songs** released each year.  
+- **Interactive filtering** by decade to analyze specific time periods.  
 
-Cumulative Listens to highlight the most popular artists.
+### 🔥 2. Most Popular Artists (by Listens)  
+- Shows the **top 10 artists** with the highest cumulative listens (views).  
+- Values are formatted in **millions** for clarity.  
 
-Artist Comparison to analyze lyrical diversity and emotional tone.
+### 🎭 3. Sentiment Analysis (NLP)  
+- **NLP-powered sentiment analysis** evaluates the emotional tone of rock lyrics over the years.  
+- Lyrics are analyzed to determine whether the sentiment is **positive, negative, or neutral**.  
+- **Visualizes sentiment trends** to uncover how rock music has reflected joy, sadness, or rebellion throughout the decades.  
 
-🚀 Features
+### 🎤 4. Artist Comparison (NLP and Complexity Analysis)  
+- Compare **two artists** to visualize differences in:  
+  - **Most popular songs** (by views).  
+  - **Positive and negative songs** (based on NLP sentiment scores).  
+  - **Lexical complexity** – NLP measures the uniqueness of vocabulary used by different artists.  
 
-🎵 1. Yearly Song Distribution
-Displays the number of rock songs released each year.
-Interactive filtering by decade to analyze specific time periods.
+---
 
-🔥 2. Most Popular Artists (by Listens)
-Shows the top 10 artists with the highest cumulative listens (views).
-Values are formatted in millions for better readability.
-Global calculation – not limited to selected filters.
+## 📊 How NLP Powers the Dashboard  
+### 1. **Sentiment Analysis**  
+- The project uses **TextBlob (NLP library)** to perform sentiment analysis on lyrics.  
+- Each lyric is analyzed using **TextBlob’s polarity score**:  
+  - **Positive Sentiment** – Lyrics convey joy, love, or excitement.  
+  - **Negative Sentiment** – Lyrics express sadness, anger, or frustration.  
+  - **Neutral Sentiment** – Balanced or factual lyrics.  
+- **Visualization**:  
+  - A **line chart** shows **sentiment over time** for filtered songs and artists.  
 
-🎭 3. Sentiment Analysis
-Analyzes the emotional tone of rock lyrics (positive, neutral, or negative).
-Graphs display sentiment over time for filtered data.
+---
 
-🎤 4. Artist Comparison
-Compare two artists to visualize differences in:
-Most popular songs (by views).
-Positive and negative songs (based on sentiment).
-Lexical complexity – measures the uniqueness of vocabulary used in lyrics.
+### 2. **Word Frequency Analysis (NLP)**  
+- By tokenizing lyrics and applying **stopword filtering**, the dashboard identifies the **most frequently used words** by each artist.  
+- **NLP filters out common stopwords** (e.g., "the", "and", "is") to highlight meaningful words that define an artist's lyrical style.  
 
-📊 Visual Enhancements
-Custom Bar Chart Colors using Plotly for distinct and vibrant visuals.
-Interactive Filters for dynamic visualization of data.
-Responsive Layout – The dashboard adapts to different screen sizes.
-Real-Time Updates – Visualizations reflect filtered data instantly.
+---
 
-🛠️ Technologies Used
-Python
-Streamlit – For building the interactive web dashboard.
-Pandas – For data manipulation and analysis.
-Plotly – For customized, colorful visualizations.
+### 3. **Lexical Complexity (Unique Vocabulary Measurement)**  
+- Lexical complexity is calculated by analyzing the **diversity of words** used in lyrics.  
+- A higher score indicates **greater vocabulary variety**.  
+- This is achieved by measuring the **ratio of unique words to total words** in each lyric.  
+
+---
+
+## 📈 How It Works  
+1. **Load the Data** – Preprocessed rock songs from 1950 to 2000 are imported into the dashboard.  
+2. **Apply NLP Sentiment Analysis** – Each lyric is analyzed for **sentiment polarity** (positive, neutral, negative).  
+3. **Filter by Decade/Artist** – Use the sidebar to explore specific decades and compare two artists.  
+4. **Visualize Trends** – Dynamic bar charts and line graphs visualize how **sentiment and complexity** evolve over time.  
+5. **Compare Two Artists** – Side-by-side comparisons reveal differences in lyrical style, complexity, and popularity.  
+
+---
+
+## 📂 Project Structure  
 
