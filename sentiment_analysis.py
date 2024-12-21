@@ -1,59 +1,46 @@
 import streamlit as st
-import pandas as pd
 from textblob import TextBlob
+import pandas as pd
 
 @st.cache_data
 def analyze_sentiment(data):
-    # Perform sentiment analysis
+    # Apply sentiment analysis to the lyrics column
     data['sentiment'] = data['lyrics'].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
     return data
 
-def get_top_songs_by_sentiment(data, artist=None):
-    if artist:
-        artist_data = data[data['artist'] == artist]
-    else:
-        artist_data = data
-
-    # Sort by sentiment (highest to lowest) and get top 3
-    top_songs = artist_data.sort_values(by='sentiment', ascending=False).head(3)[['title', 'artist', 'sentiment']]
-    return top_songs
-
+@st.cache_data
 def search_sentiment_analysis(data):
-    st.subheader("🎼 Sentiment Analysis of Song or Artist")
+    st.subheader("🔍 Sentiment Analysis for a Specific Artist or Song")
+
+    # Choose to search by artist or song
+    search_type = st.radio("Search by:", ['Artist', 'Song'])
     
-    # Dropdown for Artist or Song Analysis
-    option = st.selectbox("Choose to Analyze by", ["Select", "Artist", "Song"])
-
-    if option == "Select":
-        st.info("Select Artist or Song to analyze sentiment.")
-        return
-
-    if option == "Artist":
-        artist = st.selectbox("Select Artist", data['artist'].unique(), key="artist_sent")
-        filtered = data[data['artist'] == artist]
+    if search_type == 'Artist':
+        artist_list = data['artist'].unique()
+        artist_choice = st.selectbox("Select Artist", artist_list)
+        filtered_data = data[data['artist'] == artist_choice]
     else:
-        song = st.selectbox("Select Song", data['title'].unique(), key="song_sent")
-        filtered = data[data['title'] == song]
+        song_list = data['title'].unique()
+        song_choice = st.selectbox("Select Song", song_list)
+        filtered_data = data[data['title'] == song_choice]
+    
+    if filtered_data.empty:
+        st.warning("No data available for the selection.")
+    else:
+        # Perform sentiment analysis
+        if 'sentiment' not in filtered_data.columns:
+            st.warning("Running sentiment analysis...")
+            filtered_data = analyze_sentiment(filtered_data)
 
-    if filtered.empty:
-        st.warning("No data found for selection.")
-        return
+        # Display Results
+        st.write("### Sentiment Breakdown")
+        st.dataframe(filtered_data[['title', 'artist', 'sentiment']])
 
-    # Ensure Sentiment Column Exists
-    if 'sentiment' not in filtered.columns:
-        filtered = analyze_sentiment(filtered)
+        # Highlight Top 3 Positive and Negative Songs
+        st.write("#### 🎵 Top 3 Positive Songs")
+        top_positive = filtered_data.nlargest(3, 'sentiment')[['title', 'sentiment']]
+        st.table(top_positive)
 
-    # Display Sentiment Analysis
-    st.write(f"**Sentiment Distribution for {artist if option == 'Artist' else song}:**")
-    st.line_chart(filtered[['year', 'sentiment']].set_index('year'))
-
-    # 🌟 Display Top 3 Songs by Sentiment
-    st.subheader("🔥 Top 3 Songs by Sentiment")
-    top_songs = get_top_songs_by_sentiment(filtered, artist if option == "Artist" else None)
-    st.table(top_songs)
-
-    # Sentiment Meaning
-    st.markdown("**Sentiment Interpretation:**")
-    st.write("- **Positive (0.1 to 1.0):** Joyful, upbeat songs.")
-    st.write("- **Neutral (-0.1 to 0.1):** Calm, factual, or ambiguous.")
-    st.write("- **Negative (-1.0 to -0.1):** Sad, dark, or aggressive tones.")
+        st.write("#### 😢 Top 3 Negative Songs")
+        top_negative = filtered_data.nsmallest(3, 'sentiment')[['title', 'sentiment']]
+        st.table(top_negative)
