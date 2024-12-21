@@ -1,6 +1,10 @@
 import streamlit as st
 from data_loader import load_data
-from sentiment_analysis import plot_complexity_vs_sentiment, analyze_sentiment
+from sentiment_analysis import (
+    plot_complexity_vs_sentiment,
+    analyze_sentiment,
+    calculate_lyric_complexity
+)
 from artist_comparison import compare_artists
 
 # Page Config
@@ -18,6 +22,10 @@ else:
     st.sidebar.warning("Year column missing.")
 
 filtered_data = data[data['year'].isin(decades)] if 'year' in data.columns else data
+
+# 🛠️ Apply Sentiment and Complexity Analysis Before Plotting
+filtered_data = analyze_sentiment(filtered_data)
+filtered_data = calculate_lyric_complexity(filtered_data)
 
 # Visualization Buttons
 if st.button("Analyze Lyric Complexity"):
