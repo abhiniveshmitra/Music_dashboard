@@ -58,9 +58,3 @@ search_sentiment_analysis(filtered_data)
 # Artist Comparison
 # --------------------
 compare_artists(filtered_data)
-
-# --------------------
-# Data Exploration
-# --------------------
-st.subheader("🗂 Explore the Data")
-st.dataframe(filtered_data)
