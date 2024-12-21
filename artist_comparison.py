@@ -3,19 +3,23 @@ import pandas as pd
 from sentiment_analysis import get_top_songs_by_sentiment, analyze_sentiment
 
 def compare_artists(data):
-    st.subheader("🎸 Compare Artists (Debut, Popularity, Themes)")
+    st.subheader("🎸 Compare Artists (Popularity, Debut, Sentiment)")
 
+    # Artist Selection with Placeholder
     artist_list = data['artist'].unique()
-    artist1 = st.selectbox("Select First Artist", artist_list, key="artist1")
-    artist2 = st.selectbox("Select Second Artist", artist_list, key="artist2")
+    artist1 = st.selectbox("Select First Artist", ["Select Artist"] + list(artist_list), key="artist1")
+    artist2 = st.selectbox("Select Second Artist", ["Select Artist"] + list(artist_list), key="artist2")
+
+    if artist1 == "Select Artist" or artist2 == "Select Artist":
+        st.warning("Please select two artists for comparison.")
+        return
 
     comparison_data = data[data['artist'].isin([artist1, artist2])]
 
-    # 🛠️ Ensure Sentiment Analysis is Applied
+    # Ensure Sentiment Analysis
     if 'sentiment' not in comparison_data.columns:
         comparison_data = analyze_sentiment(comparison_data)
 
-    # Key Metrics
     avg_sentiment = comparison_data.groupby('artist')['sentiment'].mean()
     avg_length = comparison_data.groupby('artist')['lyric_length'].mean()
     most_viewed = comparison_data.groupby('artist')['views'].max()
@@ -45,11 +49,11 @@ def compare_artists(data):
     col1, col2 = st.columns(2)
 
     with col1:
-        st.write(f"**Top 3 Songs by Sentiment for {artist1}:**")
+        st.write(f"**Top 3 Songs for {artist1}:**")
         top_songs_1 = get_top_songs_by_sentiment(comparison_data, artist1)
         st.dataframe(top_songs_1)
 
     with col2:
-        st.write(f"**Top 3 Songs by Sentiment for {artist2}:**")
+        st.write(f"**Top 3 Songs for {artist2}:**")
         top_songs_2 = get_top_songs_by_sentiment(comparison_data, artist2)
         st.dataframe(top_songs_2)
