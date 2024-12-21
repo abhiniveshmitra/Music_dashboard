@@ -47,3 +47,14 @@ def compare_artists(data):
             st.table(top_pos)
             st.write("### Top Negative Songs")
             st.table(top_neg)
+
+# Add explain_sentiment to this file
+def explain_sentiment(sentiment_score):
+    if sentiment_score > 0.5:
+        st.success("😊 Highly Positive – Uplifting and joyful songs.")
+    elif sentiment_score > 0:
+        st.info("🙂 Positive – A generally optimistic tone.")
+    elif sentiment_score < -0.5:
+        st.error("😞 Highly Negative – Sad or dark themes.")
+    else:
+        st.warning("😐 Neutral – Mixed or balanced sentiment.")
