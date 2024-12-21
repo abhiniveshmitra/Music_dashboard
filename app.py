@@ -18,16 +18,26 @@ data = load_data()
 # Sidebar – Filters
 # --------------------
 st.sidebar.header("Filters")
-decades = st.sidebar.multiselect("Select Decades", data['year'].unique().tolist(), default=data['year'].unique())
-selected_artist = st.sidebar.multiselect("Select Artists", data['artist'].unique().tolist())
+data['decade'] = data['year'].apply(lambda x: (x // 10) * 10)
+
+# Decade Filter
+available_decades = sorted(data['decade'].unique())
+selected_decades = st.sidebar.multiselect("Select Decades", available_decades, default=available_decades)
+
+# Artist Selection – Two Artists Only
+artist_options = data['artist'].unique()
+selected_artists = st.sidebar.multiselect("Select Two Artists", artist_options, max_selections=2, default=artist_options[:2])
+
 word_count_filter = st.sidebar.slider("Max Word Count", min_value=50, max_value=600, value=600)
 
 # Apply Filters
-filtered_data = data[data['year'].isin(decades)]
+filtered_data = data[data['decade'].isin(selected_decades)]
 filtered_data = filtered_data[filtered_data['lyric_length'] <= word_count_filter]
 
-if selected_artist:
-    filtered_data = filtered_data[filtered_data['artist'].isin(selected_artist)]
+if selected_artists and len(selected_artists) == 2:
+    filtered_data = filtered_data[filtered_data['artist'].isin(selected_artists)]
+else:
+    st.sidebar.error("Please select exactly **two artists** for comparison.")
 
 # --------------------
 # Title and Main Section
@@ -57,4 +67,5 @@ search_sentiment_analysis(filtered_data)
 # --------------------
 # Artist Comparison
 # --------------------
-compare_artists(filtered_data)
+if len(selected_artists) == 2:
+    compare_artists(filtered_data)
