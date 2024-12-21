@@ -17,13 +17,34 @@ data = load_data()
 # --------------------
 # Header Section – Introduction
 # --------------------
-st.title("🎸 The Evolution of Rock Music (1950 - 2000)")
-st.markdown("""
-#### **Welcome to the Rock Lyrics Analysis Dashboard!**  
-Explore the golden era of rock from **1950 to 2000**.  
-This dashboard breaks down rock music through **sentiment analysis**, **word frequency**, and **artist comparisons**.  
-Uncover trends in lyrics, identify the most popular artists, and visualize how the emotional tone of rock has evolved over the decades.  
-""")
+st.markdown(
+    """
+    <style>
+    .big-font {
+        font-size:40px !important;
+        text-align: center;
+        font-weight: bold;
+        color: #ff6347;
+    }
+    .subheader {
+        font-size:22px !important;
+        text-align: center;
+        font-weight: bold;
+        color: #1e90ff;
+    }
+    .highlight {
+        font-size:18px;
+        font-style: italic;
+        text-align: center;
+        color: #555;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown('<p class="big-font">🎸 The Evolution of Rock Music (1950 - 2000)</p>', unsafe_allow_html=True)
+st.markdown('<p class="highlight">Explore how rock music evolved over the decades – from lyrical sentiment to artist comparisons.</p>', unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -57,15 +78,13 @@ if selected_artists and len(selected_artists) == 2:
     if 'sentiment' not in filtered_data.columns:
         filtered_data = analyze_sentiment(filtered_data)
 
-    # Perform Artist Comparison
-    compare_artists(filtered_data)
 else:
     st.sidebar.error("Please select exactly **two artists** for comparison.")
 
 # --------------------
 # Title and Main Section
 # --------------------
-st.header("🎵 Rock Music Through the Years")
+st.markdown('<p class="subheader">🎵 Rock Music Through the Years</p>', unsafe_allow_html=True)
 st.write("Discover the number of rock songs released over the years and the artists who defined this era.")
 
 # --------------------
@@ -95,13 +114,12 @@ st.markdown("Analyze the emotional tone of rock lyrics over the years. This sect
 search_sentiment_analysis(filtered_data)
 
 # --------------------
-# Artist Comparison Section
+# Artist Comparison Section (Remove Duplicate)
 # --------------------
-st.subheader("🎤 Compare Two Rock Legends")
-st.markdown("""
-Select two artists from the sidebar to compare their lyrical diversity, most popular songs, and emotional tone.  
-This section dives deep into how two artists' styles contrast across different time periods.
-""")
-
 if len(selected_artists) == 2:
+    st.subheader("🎤 Compare Two Rock Legends")
+    st.markdown("""
+    Select two artists from the sidebar to compare their lyrical diversity, most popular songs, and emotional tone.  
+    This section dives deep into how two artists' styles contrast across different time periods.
+    """)
     compare_artists(filtered_data)
