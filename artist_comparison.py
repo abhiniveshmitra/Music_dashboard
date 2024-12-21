@@ -8,8 +8,11 @@ stop_words = set([
     "the", "and", "is", "in", "it", "of", "to", "on", "that", "this", "for",
     "with", "as", "was", "at", "by", "from", "which", "an", "be", "or", "are",
     "but", "if", "then", "so", "such", "there", "has", "have", "had", "a", "he",
-    "she", "they", "we", "you", "your", "our", "my", "their", "its", "out", "not"
+    "she", "they", "we", "you", "your", "our", "my", "their", "its", "out", "not",
+    "well,", "don't", "where", "never", "you're", "gonna", "going", "could",
+    "about", "can't", "yeah,", "right", "every", "little"
 ])
+
 
 # Dynamic color generator (Neon Green & Red)
 def generate_colors(n):
