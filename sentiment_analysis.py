@@ -15,18 +15,20 @@ def analyze_sentiment(data):
     
     return data
 
-def plot_sentiment_trend(data):
-    data = analyze_sentiment(data)
-    st.subheader("📊 Sentiment Analysis Over Time")
-    
-    if 'year' in data.columns:
-        sentiment_by_year = data.groupby('year')['sentiment'].mean()
+def calculate_lyric_complexity(data):
+    data['lyric_length'] = data['lyrics'].apply(lambda x: len(str(x).split()))
+    data['unique_words'] = data['lyrics'].apply(lambda x: len(set(str(x).split())))
+    data['lexical_diversity'] = data['unique_words'] / data['lyric_length']
+    return data
 
-        fig, ax = plt.subplots(figsize=(10, 5))
-        ax.plot(sentiment_by_year.index, sentiment_by_year.values, marker='o', color='tab:blue')
-        ax.set_title("Average Sentiment of Rock Lyrics by Year")
-        ax.set_xlabel("Year")
-        ax.set_ylabel("Average Sentiment")
-        ax.axhline(0, color='red', linestyle='--', linewidth=1)
-        ax.grid(True)
-        st.pyplot(fig)
+def plot_complexity_vs_sentiment(data):
+    data = calculate_lyric_complexity(data)
+    
+    st.subheader("📈 Lyric Complexity vs Sentiment")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    scatter = ax.scatter(data['lexical_diversity'], data['sentiment'], c=data['year'], cmap='viridis', alpha=0.7)
+    ax.set_xlabel("Lexical Diversity (Unique Words / Total Words)")
+    ax.set_ylabel("Sentiment Score")
+    ax.set_title("Lexical Diversity vs Sentiment")
+    plt.colorbar(scatter, ax=ax, label="Year")
+    st.pyplot(fig)
