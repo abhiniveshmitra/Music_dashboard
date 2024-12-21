@@ -8,7 +8,6 @@ import random
 
 @st.cache_data
 def perform_lda(data, num_topics=3):
-    # Subset to reduce memory load (random sample of 500 rows)
     if len(data) > 500:
         data = data.sample(500, random_state=42)
     
@@ -23,17 +22,12 @@ def perform_lda(data, num_topics=3):
 def display_lda_topics(data):
     st.subheader("🧩 Topic Modeling of Rock Lyrics (LDA)")
 
-    # Customizable Topic Slider
     num_topics = st.slider("Select Number of Topics", min_value=2, max_value=5, value=3, key="lda_slider")
 
-    # Unique Button Key to Prevent Duplicate Errors
     if st.button("Run Topic Modeling", key="lda_button"):
-        with st.spinner("Running LDA Topic Modeling... This may take a few moments"):
+        with st.spinner("Running LDA Topic Modeling..."):
             lda_vis = perform_lda(data, num_topics)
+            st.session_state['lda_vis'] = pyLDAvis.prepared_data_to_html(lda_vis)
 
-            # Convert LDA visualization to HTML
-            html_vis = pyLDAvis.prepared_data_to_html(lda_vis)
-            
-            # Display directly in Streamlit
-            components.html(html_vis, height=800, scrolling=True)
-            st.success("LDA Visualization complete!")
+    if 'lda_vis' in st.session_state:
+        components.html(st.session_state['lda_vis'], height=800, scrolling=True)
