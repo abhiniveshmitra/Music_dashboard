@@ -1,3 +1,5 @@
+
+import pandas as pd
 from textblob import TextBlob
 import streamlit as st
 import matplotlib.pyplot as plt
