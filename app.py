@@ -21,6 +21,6 @@ filtered_data = data[data['year'].isin(decades)] if 'year' in data.columns else 
 # Artist Sentiment Search
 search_sentiment_analysis(filtered_data)
 
-# Expanded Artist Comparison (Sentiment Applied Only on Button Click)
+# Expanded Artist Comparison
 if st.button("Compare Artists"):
     compare_artists(filtered_data)
