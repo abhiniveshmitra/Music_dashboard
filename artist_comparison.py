@@ -10,7 +10,7 @@ stop_words = set([
     "but", "if", "then", "so", "such", "there", "has", "have", "had", "a", "he",
     "she", "they", "we", "you", "your", "our", "my", "their", "its", "out", "not",
     "well,", "don't", "where", "never", "you're", "gonna", "going", "could",
-    "about", "can't", "yeah,", "right", "every"
+    "about", "can't", "yeah,", "right", "every" ,"don't", "you’re", "ain’t","there’s"
 ])
 
 
