@@ -42,3 +42,6 @@ def display_wordcloud(data):
                 ax.axis("off")
                 plt.title(f"Word Cloud for {decade_choice}", fontsize=14, color='white')
                 st.pyplot(fig)  # Ensure correct plot rendering
+st.write("Filtered Lyrics for Word Cloud:", len(filtered_data))
+st.write(filtered_data[['year', 'lyrics']].head())
+
