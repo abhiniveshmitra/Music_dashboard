@@ -9,13 +9,19 @@ import seaborn as sns
 def load_data():
     file_id = "1BQqV3fdFJYVQU8qhfhwAjn5DDQ2SBHhR"
     url = f"https://drive.google.com/uc?id={file_id}"
-    data = pd.read_csv(url, encoding='utf-8')
-    data.columns = data.columns.str.strip()  # Clean column names
+    data = pd.read_csv(url)
+    data.columns = data.columns.str.lower().str.strip()  # Normalize columns
+    st.write("Columns in DataFrame:", data.columns.tolist())  # Debugging
     return data
 
-
-# Load the dataset
 data = load_data()
+
+# Sidebar Filters (Ensure 'year' exists)
+if 'year' in data.columns:
+    decades = st.sidebar.multiselect("Select Decades", data['year'].unique().tolist(), default=data['year'].unique())
+else:
+    st.sidebar.warning("Column 'year' not found in the dataset. Please check the CSV.")
+
 
 # Title and Description
 st.title("🎸 Rock Lyrics Analysis Dashboard")
