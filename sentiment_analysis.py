@@ -5,30 +5,37 @@ import matplotlib.pyplot as plt
 
 @st.cache_data
 def analyze_sentiment(data):
-    data['year'] = data['year'].astype(str).str.replace(',', '')
-    data['year'] = pd.to_numeric(data['year'], errors='coerce')
-    
     if 'sentiment' not in data.columns:
-        st.info("Running sentiment analysis...")
+        st.info("Running sentiment analysis on all lyrics...")
         data['sentiment'] = data['lyrics'].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
         st.success("Sentiment analysis complete.")
-    
     return data
 
-def calculate_lyric_complexity(data):
-    data['lyric_length'] = data['lyrics'].apply(lambda x: len(str(x).split()))
-    data['unique_words'] = data['lyrics'].apply(lambda x: len(set(str(x).split())))
-    data['lexical_diversity'] = data['unique_words'] / data['lyric_length']
-    return data
-
-def plot_complexity_vs_sentiment(data):
-    data = calculate_lyric_complexity(data)
+def search_sentiment_analysis(data):
+    st.subheader("🎤 Sentiment Analysis for Artist or Song")
     
-    st.subheader("📈 Lyric Complexity vs Sentiment")
-    fig, ax = plt.subplots(figsize=(10, 5))
-    scatter = ax.scatter(data['lexical_diversity'], data['sentiment'], c=data['year'], cmap='viridis', alpha=0.7)
-    ax.set_xlabel("Lexical Diversity (Unique Words / Total Words)")
-    ax.set_ylabel("Sentiment Score")
-    ax.set_title("Lexical Diversity vs Sentiment")
-    plt.colorbar(scatter, ax=ax, label="Year")
-    st.pyplot(fig)
+    # User Input for Search
+    search_query = st.text_input("Enter Artist or Song Title", "")
+    
+    if search_query:
+        # Filter by artist or song title
+        result = data[
+            (data['artist'].str.contains(search_query, case=False, na=False)) |
+            (data['title'].str.contains(search_query, case=False, na=False))
+        ]
+        
+        if not result.empty:
+            # Perform Sentiment Analysis
+            result = analyze_sentiment(result)
+            
+            # Plot Results
+            st.subheader(f"🎵 Sentiment for {search_query}")
+            fig, ax = plt.subplots(figsize=(10, 5))
+            ax.bar(result['title'], result['sentiment'], color='tab:blue')
+            ax.set_xlabel("Song Title")
+            ax.set_ylabel("Sentiment Score")
+            ax.set_title(f"Sentiment Analysis for '{search_query}'")
+            plt.xticks(rotation=45, ha='right')
+            st.pyplot(fig)
+        else:
+            st.warning(f"No results found for '{search_query}'. Try another search.")
