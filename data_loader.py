@@ -29,7 +29,7 @@ def load_data():
     # Filter for English Songs (language == 'en')
     if 'language' in data.columns:
         data = data[data['language'] == 'en']
-        st.success("Filtered to English-only songs.")
+        st.success(f"Filtered to {len(data)} English-only songs.")
     else:
         st.warning("Language column missing. Unable to filter non-English songs.")
     
