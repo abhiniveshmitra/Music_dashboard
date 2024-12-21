@@ -9,8 +9,11 @@ The Rock Lyrics Analysis Dashboard is an interactive tool designed to analyze th
 Key features include:
 
 Sentiment Analysis of rock lyrics to identify emotional trends.
+
 Visualization of Song Distribution over the years.
+
 Cumulative Listens to highlight the most popular artists.
+
 Artist Comparison to analyze lyrical diversity and emotional tone.
 
 🚀 Features
