@@ -1,18 +1,29 @@
 import streamlit as st
 import pandas as pd
 from collections import Counter
-from nltk.corpus import stopwords
 from sentiment_analysis import analyze_sentiment, get_top_songs_by_sentiment
+import nltk
+from nltk.corpus import stopwords
+
+# Download stopwords dynamically if not already present
+try:
+    stop_words = set(stopwords.words('english'))
+except:
+    nltk.download('stopwords')
+    stop_words = set(stopwords.words('english'))
+
 
 # Lexical Complexity Analysis
 def lexical_complexity_analysis(data, artist):
     artist_data = data[data['artist'] == artist]
     
     # Lexical diversity: unique words / total words
-    artist_data['lexical_diversity'] = artist_data['lyrics'].apply(lambda x: len(set(str(x).split())) / len(str(x).split()))
+    artist_data['lexical_diversity'] = artist_data['lyrics'].apply(
+        lambda x: len(set(str(x).split())) / len(str(x).split()))
     avg_diversity = artist_data['lexical_diversity'].mean()
     
     return artist_data[['year', 'lexical_diversity']].groupby('year').mean(), avg_diversity
+
 
 # Most Frequently Used Words (Filter Short Words + Stopwords)
 def get_most_frequent_words(data, artist, top_n=10):
@@ -20,12 +31,12 @@ def get_most_frequent_words(data, artist, top_n=10):
     words = artist_lyrics.split()
 
     # Remove short words (1-3 letters) and stopwords
-    stop_words = set(stopwords.words('english'))
     filtered_words = [word.lower() for word in words if len(word) > 3 and word.lower() not in stop_words]
 
     most_common = Counter(filtered_words).most_common(top_n)
     
     return pd.DataFrame(most_common, columns=['Word', 'Frequency'])
+
 
 # Compare Two Artists
 def compare_artists(data):
@@ -105,6 +116,7 @@ def compare_artists(data):
         st.subheader("📊 Popularity Over Time (by Views)")
         views_by_year = comparison_data.groupby(['year', 'artist'])['views'].sum().unstack()
         st.bar_chart(views_by_year.loc[artist_years], color=["#1F77B4", "#FF7F0E"])
+
 
 # Sentiment Explanation Function
 def explain_sentiment(sentiment_score):
