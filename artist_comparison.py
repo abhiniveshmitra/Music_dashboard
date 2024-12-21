@@ -27,21 +27,17 @@ def compare_artists(data):
 
     # Display Insights
     st.subheader("🎧 Artist Insights")
+    st.bar_chart(avg_sentiment.rename("Avg Sentiment"))
+
     col1, col2 = st.columns(2)
 
     with col1:
-        st.write("**Average Sentiment**")
-        st.dataframe(avg_sentiment.rename("Avg Sentiment").to_frame())
-
-        st.write("**Most Popular Song**")
-        st.dataframe(most_viewed.rename("Top Views").to_frame())
+        st.write("**Most Popular Song by Views**")
+        st.bar_chart(most_viewed.rename("Top Views"))
 
     with col2:
-        st.write("**Debut Year**")
-        st.dataframe(debut_year.rename("Debut Year").to_frame())
-
         st.write("**Average Lyric Length**")
-        st.dataframe(avg_length.rename("Avg Words/Song").to_frame())
+        st.bar_chart(avg_length.rename("Avg Words/Song"))
 
     # 🌟 Top 3 Sentiment Songs
     st.subheader("🔥 Top 3 Songs by Sentiment")
