@@ -97,17 +97,24 @@ yearly_counts = filtered_data.groupby('year').size()
 st.bar_chart(yearly_counts)
 
 # --------------------
-# Visualization 2 – Top Artists
+# Visualization 2 – Most Popular Artists by Cumulative Listens
 # --------------------
-st.subheader("🎸 Top 10 Artists by Number of Songs")
-st.markdown("Here are the top 10 artists with the highest number of rock songs in the filtered data.")
+st.subheader("🔥 Most Popular Artists by Cumulative Listens")
+st.markdown("This chart displays the top artists with the highest cumulative listens (views). Popularity is calculated across **all artists**, not limited to selected filters.")
 
-top_artists = filtered_data['artist'].value_counts().head(10)
-st.bar_chart(top_artists)
+# Aggregate listens globally
+top_popular_artists = (
+    data.groupby('artist')['views'].sum()
+    .sort_values(ascending=False)
+    .head(10)
+)
+
+st.bar_chart(top_popular_artists)
+
 
 
 # --------------------
-# Artist Comparison Section (Remove Duplicate)
+# Artist Comparison Section
 # --------------------
 if len(selected_artists) == 2:
     st.subheader("🎤 Compare Two Rock Legends")
