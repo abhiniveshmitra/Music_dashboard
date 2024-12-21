@@ -4,15 +4,26 @@ from textblob import TextBlob
 
 @st.cache_data
 def analyze_sentiment(data):
+    # Perform sentiment analysis
     data['sentiment'] = data['lyrics'].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
     return data
+
+def get_top_songs_by_sentiment(data, artist=None):
+    if artist:
+        artist_data = data[data['artist'] == artist]
+    else:
+        artist_data = data
+
+    # Sort by sentiment (highest to lowest) and get top 3
+    top_songs = artist_data.sort_values(by='sentiment', ascending=False).head(3)[['title', 'artist', 'sentiment']]
+    return top_songs
 
 def search_sentiment_analysis(data):
     st.subheader("🎼 Sentiment Analysis of Song or Artist")
     
     # Dropdown for Artist or Song Analysis
     option = st.selectbox("Choose to Analyze by", ["Select", "Artist", "Song"])
-    
+
     if option == "Select":
         st.info("Select Artist or Song to analyze sentiment.")
         return
@@ -32,9 +43,14 @@ def search_sentiment_analysis(data):
     if 'sentiment' not in filtered.columns:
         filtered = analyze_sentiment(filtered)
 
-    # Display Results
+    # Display Sentiment Analysis
     st.write(f"**Sentiment Distribution for {artist if option == 'Artist' else song}:**")
-    st.bar_chart(filtered['sentiment'])
+    st.line_chart(filtered[['year', 'sentiment']].set_index('year'))
+
+    # 🌟 Display Top 3 Songs by Sentiment
+    st.subheader("🔥 Top 3 Songs by Sentiment")
+    top_songs = get_top_songs_by_sentiment(filtered, artist if option == "Artist" else None)
+    st.table(top_songs)
 
     # Sentiment Meaning
     st.markdown("**Sentiment Interpretation:**")
