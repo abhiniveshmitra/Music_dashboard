@@ -10,22 +10,27 @@ def load_data():
     zip_output = 'ezyzip.zip'
     csv_output = 'filtered_rock_1950_2000_cleaned.csv'
     
-    # Check if CSV Already Exists
+    # Check if CSV already exists
     if os.path.exists(csv_output):
         st.info("Using cached CSV file.")
-        return pd.read_csv(csv_output)
-
-    # Download ZIP if CSV Missing
-    st.info("Downloading ZIP from Google Drive...")
-    gdown.download(f'https://drive.google.com/uc?id={file_id}&confirm=t', zip_output, quiet=False)
+        data = pd.read_csv(csv_output)
+    else:
+        st.info("Downloading ZIP from Google Drive...")
+        gdown.download(f'https://drive.google.com/uc?id={file_id}&confirm=t', zip_output, quiet=False)
+        
+        # Unzip the File
+        with ZipFile(zip_output, 'r') as zip_ref:
+            zip_ref.extractall()
+            st.success("File unzipped successfully!")
+        
+        # Load CSV
+        data = pd.read_csv(csv_output)
     
-    # Unzip the File
-    with ZipFile(zip_output, 'r') as zip_ref:
-        zip_ref.extractall()
-        st.success("File unzipped successfully!")
-
-    # Batch Load for Large CSVs
-    chunk_size = 100000
-    chunks = pd.read_csv(csv_output, chunksize=chunk_size)
-    data = pd.concat(chunks)
+    # Filter for English Songs (language == 'en')
+    if 'language' in data.columns:
+        data = data[data['language'] == 'en']
+        st.success("Filtered to English-only songs.")
+    else:
+        st.warning("Language column missing. Unable to filter non-English songs.")
+    
     return data
