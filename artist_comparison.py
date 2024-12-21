@@ -13,7 +13,7 @@ stop_words = set([
     "about", "can't", "yeah,", "right", "every", "little"
 ])
 
-# Most Frequent Words (Filtered)
+# Frequent Words Analysis
 def get_most_frequent_words(data, artist, top_n=10):
     artist_lyrics = " ".join(data[data['artist'] == artist]['lyrics'].dropna())
     words = artist_lyrics.split()
@@ -40,25 +40,38 @@ def compare_artists(data):
     if 'sentiment' not in comparison_data.columns:
         comparison_data = analyze_sentiment(comparison_data)
 
-    # Layout
-    st.markdown("### Sentiment and Lexical Complexity Comparison")
+    # Title Section
+    st.markdown("### Key Stats and Popular Songs")
 
-    # Sentiment Over Time Plot
+    # Display Popular Songs
+    popular_songs = comparison_data.sort_values(by='views', ascending=False).groupby('artist').head(3)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"**Most Popular Songs by {artist1}**")
+        st.table(popular_songs[popular_songs['artist'] == artist1][['title', 'views']])
+
+    with col2:
+        st.markdown(f"**Most Popular Songs by {artist2}**")
+        st.table(popular_songs[popular_songs['artist'] == artist2][['title', 'views']])
+
+    # Sentiment Over Time
+    st.markdown("### 📈 Sentiment and Lexical Complexity Over Time")
     sentiment_by_year = comparison_data.groupby(['year', 'artist'])['sentiment'].mean().unstack().fillna(0)
-    artist_years = comparison_data['year'].unique()
 
-    st.markdown("#### 📈 Sentiment Over Time")
-    st.line_chart(sentiment_by_year.loc[artist_years], color=["#32CD32", "#FF6347"])
-
-    # Lexical Complexity Analysis
-    st.markdown("#### 📚 Lexical Complexity")
+    # Lexical Complexity Calculation Over Time
     comparison_data['lexical_diversity'] = comparison_data['lyrics'].apply(
         lambda x: len(set(str(x).split())) / len(str(x).split())
     )
-    lexical_comparison = comparison_data.groupby('artist')['lexical_diversity'].mean()
-    st.bar_chart(lexical_comparison)
+    lexical_by_year = comparison_data.groupby(['year', 'artist'])['lexical_diversity'].mean().unstack().fillna(0)
 
-    # Top Positive/Negative Songs
+    # Combine Sentiment and Lexical Complexity for Dual Line Chart
+    combined = sentiment_by_year.join(lexical_by_year, lsuffix='_sentiment', rsuffix='_lexical')
+    combined.columns = [f"{col} - Sentiment" if 'sentiment' in col else f"{col} - Lexical" for col in combined.columns]
+
+    st.line_chart(combined, color=["#32CD32", "#FF6347", "#1E90FF", "#FFA500"])
+
+    # Positive/Negative Songs
     st.markdown("### 🎵 Top Positive and Negative Songs")
     col1, col2 = st.columns(2)
 
@@ -77,13 +90,8 @@ def compare_artists(data):
         st.markdown(f"**Top Negative Songs by {artist2}**")
         st.table(neg2[['title', 'views', 'sentiment']])
 
-    # Most Popular Songs by Views
-    st.markdown("#### 🔥 Most Popular Songs (Top 3 by Views)")
-    popular_songs = comparison_data.sort_values(by='views', ascending=False).groupby('artist').head(3)
-    st.dataframe(popular_songs[['title', 'artist', 'views']])
-
     # Most Frequent Words
-    st.markdown("#### 🔡 Most Frequently Used Words")
+    st.markdown("### 🔡 Most Frequently Used Words")
     col1, col2 = st.columns(2)
 
     with col1:
