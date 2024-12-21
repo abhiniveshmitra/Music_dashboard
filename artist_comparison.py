@@ -14,11 +14,16 @@ def lexical_complexity_analysis(data, artist):
 def get_album_info(data, artist):
     artist_data = data[data['artist'] == artist]
     
-    # Debut album (earliest year)
-    debut_album = artist_data.loc[artist_data['year'].idxmin()][['album', 'year']]
-    
-    # Most popular album (highest total views)
-    most_popular_album = artist_data.groupby('album')['views'].sum().idxmax()
+    # Check if album column exists
+    if 'album' in artist_data.columns:
+        # Debut album (earliest year)
+        debut_album = artist_data.loc[artist_data['year'].idxmin()][['album', 'year']]
+        
+        # Most popular album (highest total views)
+        most_popular_album = artist_data.groupby('album')['views'].sum().idxmax()
+    else:
+        debut_album = pd.Series({'album': 'Unknown', 'year': 'N/A'})
+        most_popular_album = 'Unknown'
     
     return debut_album, most_popular_album
 
@@ -39,8 +44,12 @@ def compare_artists(data):
         # Ensure sentiment analysis for comparison data
         comparison_data = analyze_sentiment(comparison_data)
 
-        # Filter columns and remove full lyrics, unnecessary fields
-        comparison_data = comparison_data[['title', 'artist', 'sentiment', 'views', 'year', 'lyrics', 'album']]
+        # Select existing columns only
+        columns_to_keep = ['title', 'artist', 'sentiment', 'views', 'year', 'lyrics']
+        if 'album' in comparison_data.columns:
+            columns_to_keep.append('album')
+
+        comparison_data = comparison_data[columns_to_keep]
 
         # Get years when artists were active
         artist_years = comparison_data['year'].unique()
@@ -67,7 +76,7 @@ def compare_artists(data):
 
             # Album Info
             debut_album, most_popular_album = get_album_info(comparison_data, artist1)
-            st.write(f"**Debut Album:** {debut_album['album']} ({int(debut_album['year'])})")
+            st.write(f"**Debut Album:** {debut_album['album']} ({debut_album['year']})")
             st.write(f"**Most Popular Album:** {most_popular_album}")
 
         # Artist 2 Section
@@ -88,26 +97,6 @@ def compare_artists(data):
             st.table(top_neg[['title', 'sentiment', 'views']].reset_index(drop=True))
 
             debut_album, most_popular_album = get_album_info(comparison_data, artist2)
-            st.write(f"**Debut Album:** {debut_album['album']} ({int(debut_album['year'])})")
+            st.write(f"**Debut Album:** {debut_album['album']} ({debut_album['year']})")
             st.write(f"**Most Popular Album:** {most_popular_album}")
 
-        # Sentiment Over Time Visualization
-        st.subheader("📈 Sentiment Comparison Over Time")
-        sentiment_by_year = comparison_data.groupby(['year', 'artist'])['sentiment'].mean().unstack()
-        st.line_chart(sentiment_by_year.loc[artist_years], color=["#FF5733", "#4B9CD3"])
-
-        # Popularity Over Time (Views)
-        st.subheader("📊 Popularity Over Time (by Views)")
-        views_by_year = comparison_data.groupby(['year', 'artist'])['views'].sum().unstack()
-        st.bar_chart(views_by_year.loc[artist_years], color=["#1F77B4", "#FF7F0E"])
-
-# Sentiment Explanation Function
-def explain_sentiment(sentiment_score):
-    if sentiment_score > 0.5:
-        st.success("😊 Highly Positive – Uplifting and joyful songs.")
-    elif sentiment_score > 0:
-        st.info("🙂 Positive – A generally optimistic tone.")
-    elif sentiment_score < -0.5:
-        st.error("😞 Highly Negative – Sad or dark themes.")
-    else:
-        st.warning("😐 Neutral – Mixed or balanced sentiment.")
