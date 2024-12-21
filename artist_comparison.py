@@ -1,7 +1,7 @@
+from sentiment_analysis import analyze_sentiment, get_top_songs_by_sentiment  # Import the missing function
 import streamlit as st
 import pandas as pd
 from collections import Counter
-from sentiment_analysis import analyze_sentiment  # Import sentiment analysis function
 
 stop_words = set([
     "the", "and", "is", "in", "it", "of", "to", "on", "that", "this", "for",
@@ -56,11 +56,3 @@ def compare_artists(data):
         st.markdown(f"**Most Negative Songs by {artist2}**")
         pos2, neg2 = get_top_songs_by_sentiment(comparison_data, artist2)
         st.table(neg2)
-
-    # Lexical Complexity
-    st.markdown("#### 📚 Lexical Complexity Analysis")
-    comparison_data['lexical_diversity'] = comparison_data['lyrics'].apply(
-        lambda x: len(set(str(x).split())) / len(str(x).split()) if len(str(x).split()) > 0 else 0
-    )
-    lexical_comparison = comparison_data.groupby('artist')['lexical_diversity'].mean()
-    st.bar_chart(lexical_comparison)
