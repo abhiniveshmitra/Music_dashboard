@@ -112,7 +112,6 @@ top_popular_artists = (
 st.bar_chart(top_popular_artists)
 
 
-
 # --------------------
 # Artist Comparison Section
 # --------------------
