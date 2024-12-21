@@ -16,7 +16,7 @@ st.write("Explore the evolution of rock music through sentiment, topic modeling,
 
 # Sidebar Filters
 st.sidebar.header("Filters")
-decades = st.sidebar.multiselect("Select Decades", data['year'].unique().tolist(), default=data['year'].unique())
+#decades = st.sidebar.multiselect("Select Decades", data['year'].unique().tolist(), default=data['year'].unique())
 selected_topic = st.sidebar.selectbox("Select Topic", ['All'] + sorted(data['dominant_topic'].unique().tolist()))
 filter_by_rock = st.sidebar.checkbox("Show Only Rock Songs", value=True)
 filter_by_wordcount = st.sidebar.slider("Max Word Count", min_value=50, max_value=1000, value=600)
