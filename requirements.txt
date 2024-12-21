@@ -1,4 +1,6 @@
 streamlit
 pandas
+gdown
+requests
 matplotlib
 seaborn
