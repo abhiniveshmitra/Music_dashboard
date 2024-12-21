@@ -5,13 +5,14 @@ import seaborn as sns
 
 # Cache data to optimize performance
 @st.cache_data
+@st.cache_data
 def load_data():
-    # Google Drive File ID extracted from the link
     file_id = "1BQqV3fdFJYVQU8qhfhwAjn5DDQ2SBHhR"
     url = f"https://drive.google.com/uc?id={file_id}"
-    
-    # Load the CSV directly from Google Drive
-    return pd.read_csv(url)
+    data = pd.read_csv(url, encoding='utf-8')
+    data.columns = data.columns.str.strip()  # Clean column names
+    return data
+
 
 # Load the dataset
 data = load_data()
