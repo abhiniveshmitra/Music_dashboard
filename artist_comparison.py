@@ -19,6 +19,9 @@ def compare_artists(data):
         # Ensure sentiment analysis for comparison data
         comparison_data = analyze_sentiment(comparison_data)
 
+        # Filter only relevant columns (no full lyrics, language, etc.)
+        comparison_data = comparison_data[['title', 'artist', 'sentiment', 'views', 'year']]
+
         col1, col2 = st.columns(2)
 
         # Artist 1 Info
@@ -31,9 +34,14 @@ def compare_artists(data):
             # Top Songs by Sentiment
             top_pos, top_neg = get_top_songs_by_sentiment(comparison_data, artist1)
             st.write("### Top Positive Songs")
-            st.table(top_pos)
+            st.table(top_pos[['title', 'sentiment', 'views']])
             st.write("### Top Negative Songs")
-            st.table(top_neg)
+            st.table(top_neg[['title', 'sentiment', 'views']])
+
+            # Most Popular Song
+            most_popular = comparison_data[comparison_data['artist'] == artist1].nlargest(1, 'views')
+            st.write("### Most Popular Song")
+            st.table(most_popular[['title', 'views', 'year']])
 
         # Artist 2 Info
         with col2:
@@ -44,11 +52,15 @@ def compare_artists(data):
 
             top_pos, top_neg = get_top_songs_by_sentiment(comparison_data, artist2)
             st.write("### Top Positive Songs")
-            st.table(top_pos)
+            st.table(top_pos[['title', 'sentiment', 'views']])
             st.write("### Top Negative Songs")
-            st.table(top_neg)
+            st.table(top_neg[['title', 'sentiment', 'views']])
 
-# Add explain_sentiment to this file
+            most_popular = comparison_data[comparison_data['artist'] == artist2].nlargest(1, 'views')
+            st.write("### Most Popular Song")
+            st.table(most_popular[['title', 'views', 'year']])
+
+# Explain sentiment function to give context on scores
 def explain_sentiment(sentiment_score):
     if sentiment_score > 0.5:
         st.success("😊 Highly Positive – Uplifting and joyful songs.")
