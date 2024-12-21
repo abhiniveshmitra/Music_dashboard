@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
-import gdown
-from io import BytesIO
-from zipfile import ZipFile
-import os
+from loader import load_data
 from sentiment_analysis import search_sentiment_analysis
 from artist_comparison import compare_artists
 
@@ -15,26 +12,6 @@ st.set_page_config(layout="wide", page_title="Rock Lyrics Dashboard", page_icon=
 # --------------------
 # Data Loading
 # --------------------
-@st.cache_data
-def load_data():
-    file_id = "1bw3EvezRiUj9sV3vTT6OtY840pxcPpW1"
-    zip_output = 'ezyzip.zip'
-    csv_output = 'filtered_rock_1950_2000_cleaned.csv'
-    
-    # Download ZIP from Google Drive
-    if not os.path.exists(csv_output):
-        gdown.download(f'https://drive.google.com/uc?id={file_id}&confirm=t', zip_output, quiet=False)
-        with ZipFile(zip_output, 'r') as zip_ref:
-            zip_ref.extractall()
-            st.success("File unzipped successfully!")
-    
-    # Load CSV
-    data = pd.read_csv(csv_output)
-    # Filter to English Lyrics Only
-    data = data[data['language'] == 'en']
-    return data
-
-# Load Data
 data = load_data()
 
 # --------------------
