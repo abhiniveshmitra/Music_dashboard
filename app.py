@@ -1,7 +1,7 @@
 import streamlit as st
 from data_loader import load_data
 from sentiment_analysis import plot_sentiment_trend
-from wordcloud_generator import generate_wordcloud
+from wordcloud_generator import display_wordcloud  # Import display function
 from topic_modeling import display_lda_topics
 
 # Load Data
@@ -36,9 +36,7 @@ st.subheader("🎤 Top 10 Artists by Number of Songs")
 top_artists = filtered_data['artist'].value_counts().head(10)
 st.bar_chart(top_artists)
 
-# Call Sentiment Analysis and Word Cloud
-#plot_sentiment_trend(filtered_data)
-generate_wordcloud(filtered_data)
-
-# Call Topic Modeling Visualization
+# Call Sentiment Analysis, Word Cloud, and LDA
+plot_sentiment_trend(filtered_data)
+display_wordcloud(filtered_data)  # Correctly call the display function
 display_lda_topics(filtered_data)
