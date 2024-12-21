@@ -1,30 +1,10 @@
 import streamlit as st
-import pandas as pd
-import gdown
-from io import BytesIO
-from zipfile import ZipFile
-import os
+from data_loader import load_data
+from sentiment_analysis import plot_sentiment_trend
+from wordcloud_generator import generate_wordcloud
+from topic_modeling import display_lda_topics
 
-@st.cache_data
-def load_data():
-    # Google Drive ZIP file ID
-    file_id = "1bw3EvezRiUj9sV3vTT6OtY840pxcPpW1"
-    zip_output = 'ezyzip.zip'
-    csv_output = 'filtered_rock_1950_2000_cleaned.csv'
-    
-    # Use gdown to bypass Google Drive virus scan warning
-    if not os.path.exists(csv_output):
-        gdown.download(f'https://drive.google.com/uc?id={file_id}&confirm=t', zip_output, quiet=False)
-
-        # Unzip the file
-        with ZipFile(zip_output, 'r') as zip_ref:
-            zip_ref.extractall()
-            st.success("File unzipped successfully!")
-
-    # Load CSV
-    return pd.read_csv(csv_output)
-
-# Load data
+# Load Data
 data = load_data()
 
 # Title and Description
@@ -46,19 +26,19 @@ filtered_data = filtered_data[filtered_data['lyric_length'] <= word_count_filter
 if selected_artist:
     filtered_data = filtered_data[filtered_data['artist'].isin(selected_artist)]
 
-# Visualization 1 – Yearly Distribution of Songs
+# Visualizations
 st.subheader("🎵 Number of Rock Songs by Year")
 if 'year' in filtered_data.columns:
     yearly_counts = filtered_data.groupby('year').size()
     st.bar_chart(yearly_counts)
-else:
-    st.write("Year data not available for visualization.")
 
-# Visualization 2 – Top 10 Artists
 st.subheader("🎤 Top 10 Artists by Number of Songs")
 top_artists = filtered_data['artist'].value_counts().head(10)
 st.bar_chart(top_artists)
 
-# Show Raw Data
-st.subheader("🗂 Explore the Data")
-st.dataframe(filtered_data)
+# Call Sentiment Analysis and Word Cloud
+plot_sentiment_trend(filtered_data)
+generate_wordcloud(filtered_data)
+
+# Call Topic Modeling Visualization
+display_lda_topics(filtered_data)
