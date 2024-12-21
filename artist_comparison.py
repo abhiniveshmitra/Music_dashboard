@@ -13,13 +13,17 @@ stop_words = set([
     "about", "can't", "yeah,", "right", "every", "little"
 ])
 
-# Frequent Words Analysis
+
+# Frequent Words Analysis (1-based indexing)
 def get_most_frequent_words(data, artist, top_n=10):
     artist_lyrics = " ".join(data[data['artist'] == artist]['lyrics'].dropna())
     words = artist_lyrics.split()
     filtered_words = [word.lower() for word in words if len(word) > 4 and word.lower() not in stop_words]
     most_common = Counter(filtered_words).most_common(top_n)
-    return pd.DataFrame(most_common, columns=['Word', 'Frequency'])
+    df = pd.DataFrame(most_common, columns=['Word', 'Frequency'])
+    df.index = df.index + 1  # 1-based indexing
+    return df
+
 
 # Artist Comparison Function
 def compare_artists(data):
@@ -74,25 +78,6 @@ def compare_artists(data):
         st.markdown(f"**Top Negative Songs by {artist2}**")
         st.table(neg2[['title', 'views', 'sentiment']])
 
-    # Graph Section (After Data Tables)
-    st.markdown("---")
-    st.markdown("### 📈 Sentiment Over Time")
-    st.info("**Sentiment Analysis:** Measures the positivity/negativity of lyrics over the years.")
-
-    # Sentiment Over Time
-    sentiment_by_year = comparison_data.groupby(['year', 'artist'])['sentiment'].mean().unstack().fillna(0)
-    st.line_chart(sentiment_by_year, color=["#32CD32", "#FF6347"])  # Green & Red for Positive/Negative
-
-    # Lexical Complexity Calculation Over Time
-    st.markdown("### 📚 Lexical Complexity Over Time")
-    st.info("**Lexical Complexity:** Measures vocabulary diversity over the years for both artists.")
-    
-    comparison_data['lexical_diversity'] = comparison_data['lyrics'].apply(
-        lambda x: len(set(str(x).split())) / len(str(x).split())
-    )
-    lexical_by_year = comparison_data.groupby(['year', 'artist'])['lexical_diversity'].mean().unstack().fillna(0)
-    st.line_chart(lexical_by_year, color=["#1E90FF", "#FFA500"])  # Blue & Orange for Lexical Diversity
-
     # Most Frequent Words
     st.markdown("### 🔡 Most Frequently Used Words")
     col1, col2 = st.columns(2)
@@ -106,3 +91,22 @@ def compare_artists(data):
         st.markdown(f"**Common Words by {artist2}**")
         freq_words2 = get_most_frequent_words(comparison_data, artist2)
         st.table(freq_words2)
+
+    # Graph Section (After Data Tables)
+    st.markdown("---")
+
+    # Sentiment Over Time Plot
+    st.markdown("### 📈 Sentiment Over Time")
+    st.info("**Sentiment Analysis:** Measures the positivity/negativity of lyrics over the years.")
+    sentiment_by_year = comparison_data.groupby(['year', 'artist'])['sentiment'].mean().unstack().fillna(0)
+    st.line_chart(sentiment_by_year, color=["#32CD32", "#FF6347"])
+
+    # Lexical Complexity Over Time Plot
+    st.markdown("### 📚 Lexical Complexity Over Time")
+    st.info("**Lexical Complexity:** Measures vocabulary diversity over the years for both artists.")
+    
+    comparison_data['lexical_diversity'] = comparison_data['lyrics'].apply(
+        lambda x: len(set(str(x).split())) / len(str(x).split())
+    )
+    lexical_by_year = comparison_data.groupby(['year', 'artist'])['lexical_diversity'].mean().unstack().fillna(0)
+    st.line_chart(lexical_by_year, color=["#1E90FF", "#FFA500"])
