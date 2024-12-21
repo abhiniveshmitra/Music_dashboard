@@ -44,10 +44,8 @@ def compare_artists(data):
     if 'sentiment' not in comparison_data.columns:
         comparison_data = analyze_sentiment(comparison_data)
 
-    # Title Section
-    st.markdown("### Key Stats and Popular Songs")
-
     # Display Popular Songs
+    st.markdown("### 🔥 Most Popular Songs (Top 3 by Views)")
     popular_songs = comparison_data.sort_values(by='views', ascending=False).groupby('artist').head(3)
     
     col1, col2 = st.columns(2)
@@ -61,11 +59,10 @@ def compare_artists(data):
 
     # Positive/Negative Songs
     st.markdown("### 🎵 Top Positive and Negative Songs")
-    col1, col2 = st.columns(2)
-
     pos1, neg1 = get_top_songs_by_sentiment(comparison_data, artist1)
     pos2, neg2 = get_top_songs_by_sentiment(comparison_data, artist2)
 
+    col1, col2 = st.columns(2)
     with col1:
         st.markdown(f"**Top Positive Songs by {artist1}**")
         st.table(pos1[['title', 'views', 'sentiment']])
