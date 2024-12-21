@@ -1,55 +1,62 @@
 import streamlit as st
 import pandas as pd
-from sentiment_analysis import get_top_songs_by_sentiment, analyze_sentiment
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+
+@st.cache_data
+def get_top_songs_by_sentiment(data, artist=None):
+    if artist:
+        artist_data = data[data['artist'] == artist]
+    else:
+        artist_data = data
+
+    # Sort by sentiment and get top 3
+    top_songs = artist_data.sort_values(by='sentiment', ascending=False).head(3)[['title', 'artist', 'sentiment']]
+    return top_songs
+
+def generate_wordcloud(data, artist):
+    # Filter lyrics for selected artist
+    artist_lyrics = " ".join(data[data['artist'] == artist]['lyrics'].dropna())
+    
+    if artist_lyrics:
+        wordcloud = WordCloud(width=800, height=400, background_color='black').generate(artist_lyrics)
+        
+        plt.figure(figsize=(10, 5))
+        plt.imshow(wordcloud, interpolation="bilinear")
+        plt.axis('off')
+        st.pyplot(plt)
+    else:
+        st.warning(f"No lyrics available for {artist}")
 
 def compare_artists(data):
-    st.subheader("🎸 Compare Artists (Popularity, Debut, Sentiment)")
+    st.subheader("🎤 Compare Two Artists")
+    
+    # Artist Selection
+    artists = data['artist'].unique()
+    artist1 = st.selectbox("Select First Artist", artists, key='artist1')
+    artist2 = st.selectbox("Select Second Artist", artists, key='artist2')
 
-    # Artist Selection with Placeholder
-    artist_list = data['artist'].unique()
-    artist1 = st.selectbox("Select First Artist", ["Select Artist"] + list(artist_list), key="artist1")
-    artist2 = st.selectbox("Select Second Artist", ["Select Artist"] + list(artist_list), key="artist2")
+    # Ensure Artists are Selected
+    if artist1 and artist2:
+        comparison_data = data[data['artist'].isin([artist1, artist2])]
+        
+        # Average Sentiment Comparison
+        st.write("**📊 Sentiment Comparison**")
+        avg_sentiment = comparison_data.groupby('artist')['sentiment'].mean()
+        st.bar_chart(avg_sentiment)
 
-    if artist1 == "Select Artist" or artist2 == "Select Artist":
-        st.warning("Please select two artists for comparison.")
-        return
+        # Top 3 Songs by Sentiment for Each Artist
+        st.write(f"**🔥 Top 3 Songs by Sentiment for {artist1}**")
+        top_songs_1 = get_top_songs_by_sentiment(data, artist1)
+        st.table(top_songs_1)
 
-    comparison_data = data[data['artist'].isin([artist1, artist2])]
+        st.write(f"**🔥 Top 3 Songs by Sentiment for {artist2}**")
+        top_songs_2 = get_top_songs_by_sentiment(data, artist2)
+        st.table(top_songs_2)
 
-    # Ensure Sentiment Analysis
-    if 'sentiment' not in comparison_data.columns:
-        comparison_data = analyze_sentiment(comparison_data)
+        # 🎨 Word Clouds for Both Artists
+        st.write(f"**☁️ Word Cloud for {artist1}**")
+        generate_wordcloud(data, artist1)
 
-    avg_sentiment = comparison_data.groupby('artist')['sentiment'].mean()
-    avg_length = comparison_data.groupby('artist')['lyric_length'].mean()
-    most_viewed = comparison_data.groupby('artist')['views'].max()
-    debut_year = comparison_data.groupby('artist')['year'].min()
-
-    # Display Insights
-    st.subheader("🎧 Artist Insights")
-    st.bar_chart(avg_sentiment.rename("Avg Sentiment"))
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.write("**Most Popular Song by Views**")
-        st.bar_chart(most_viewed.rename("Top Views"))
-
-    with col2:
-        st.write("**Average Lyric Length**")
-        st.bar_chart(avg_length.rename("Avg Words/Song"))
-
-    # 🌟 Top 3 Sentiment Songs
-    st.subheader("🔥 Top 3 Songs by Sentiment")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.write(f"**Top 3 Songs for {artist1}:**")
-        top_songs_1 = get_top_songs_by_sentiment(comparison_data, artist1)
-        st.dataframe(top_songs_1)
-
-    with col2:
-        st.write(f"**Top 3 Songs for {artist2}:**")
-        top_songs_2 = get_top_songs_by_sentiment(comparison_data, artist2)
-        st.dataframe(top_songs_2)
+        st.write(f"**☁️ Word Cloud for {artist2}**")
+        generate_wordcloud(data, artist2)
