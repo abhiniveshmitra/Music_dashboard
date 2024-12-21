@@ -55,22 +55,6 @@ def compare_artists(data):
         st.markdown(f"**Most Popular Songs by {artist2}**")
         st.table(popular_songs[popular_songs['artist'] == artist2][['title', 'views']])
 
-    # Sentiment Over Time
-    st.markdown("### 📈 Sentiment and Lexical Complexity Over Time")
-    sentiment_by_year = comparison_data.groupby(['year', 'artist'])['sentiment'].mean().unstack().fillna(0)
-
-    # Lexical Complexity Calculation Over Time
-    comparison_data['lexical_diversity'] = comparison_data['lyrics'].apply(
-        lambda x: len(set(str(x).split())) / len(str(x).split())
-    )
-    lexical_by_year = comparison_data.groupby(['year', 'artist'])['lexical_diversity'].mean().unstack().fillna(0)
-
-    # Combine Sentiment and Lexical Complexity for Dual Line Chart
-    combined = sentiment_by_year.join(lexical_by_year, lsuffix='_sentiment', rsuffix='_lexical')
-    combined.columns = [f"{col} - Sentiment" if 'sentiment' in col else f"{col} - Lexical" for col in combined.columns]
-
-    st.line_chart(combined, color=["#32CD32", "#FF6347", "#1E90FF", "#FFA500"])
-
     # Positive/Negative Songs
     st.markdown("### 🎵 Top Positive and Negative Songs")
     col1, col2 = st.columns(2)
@@ -89,6 +73,25 @@ def compare_artists(data):
         st.table(pos2[['title', 'views', 'sentiment']])
         st.markdown(f"**Top Negative Songs by {artist2}**")
         st.table(neg2[['title', 'views', 'sentiment']])
+
+    # Graph Section (After Data Tables)
+    st.markdown("---")
+    st.markdown("### 📈 Sentiment Over Time")
+    st.info("**Sentiment Analysis:** Measures the positivity/negativity of lyrics over the years.")
+
+    # Sentiment Over Time
+    sentiment_by_year = comparison_data.groupby(['year', 'artist'])['sentiment'].mean().unstack().fillna(0)
+    st.line_chart(sentiment_by_year, color=["#32CD32", "#FF6347"])  # Green & Red for Positive/Negative
+
+    # Lexical Complexity Calculation Over Time
+    st.markdown("### 📚 Lexical Complexity Over Time")
+    st.info("**Lexical Complexity:** Measures vocabulary diversity over the years for both artists.")
+    
+    comparison_data['lexical_diversity'] = comparison_data['lyrics'].apply(
+        lambda x: len(set(str(x).split())) / len(str(x).split())
+    )
+    lexical_by_year = comparison_data.groupby(['year', 'artist'])['lexical_diversity'].mean().unstack().fillna(0)
+    st.line_chart(lexical_by_year, color=["#1E90FF", "#FFA500"])  # Blue & Orange for Lexical Diversity
 
     # Most Frequent Words
     st.markdown("### 🔡 Most Frequently Used Words")
