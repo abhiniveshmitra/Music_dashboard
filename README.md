@@ -70,5 +70,5 @@ By applying **NLP techniques** to lyrical data, this project reveals how **rock 
 
 ---
 
-## 📂 Project Structure  
+
 
