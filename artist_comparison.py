@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from sentiment_analysis import get_top_songs_by_sentiment
+from sentiment_analysis import get_top_songs_by_sentiment, analyze_sentiment
 
 def compare_artists(data):
     st.subheader("🎸 Compare Artists (Debut, Popularity, Themes)")
@@ -10,6 +10,10 @@ def compare_artists(data):
     artist2 = st.selectbox("Select Second Artist", artist_list, key="artist2")
 
     comparison_data = data[data['artist'].isin([artist1, artist2])]
+
+    # 🛠️ Ensure Sentiment Analysis is Applied
+    if 'sentiment' not in comparison_data.columns:
+        comparison_data = analyze_sentiment(comparison_data)
 
     # Key Metrics
     avg_sentiment = comparison_data.groupby('artist')['sentiment'].mean()
@@ -42,10 +46,10 @@ def compare_artists(data):
 
     with col1:
         st.write(f"**Top 3 Songs by Sentiment for {artist1}:**")
-        top_songs_1 = get_top_songs_by_sentiment(data, artist1)
+        top_songs_1 = get_top_songs_by_sentiment(comparison_data, artist1)
         st.dataframe(top_songs_1)
 
     with col2:
         st.write(f"**Top 3 Songs by Sentiment for {artist2}:**")
-        top_songs_2 = get_top_songs_by_sentiment(data, artist2)
+        top_songs_2 = get_top_songs_by_sentiment(comparison_data, artist2)
         st.dataframe(top_songs_2)
