@@ -88,28 +88,33 @@ st.markdown('<p class="subheader">🎵 Rock Music Through the Years</p>', unsafe
 st.write("Discover the number of rock songs released over the years and the artists who defined this era.")
 
 # --------------------
-# Visualization 1 – Yearly Song Distribution
+# Visualization 1 – Yearly Song Distribution (Enhanced Colors)
 # --------------------
 st.subheader("📅 Number of Rock Songs by Year")
 st.markdown("This graph shows the distribution of rock songs released each year. Use the filters on the left to narrow down by decade or artist.")
 
 yearly_counts = filtered_data.groupby('year').size()
-st.bar_chart(yearly_counts)
+yearly_counts_df = pd.DataFrame({'Year': yearly_counts.index, 'Count': yearly_counts.values})
+
+st.bar_chart(yearly_counts_df.set_index('Year'), use_container_width=True)
 
 # --------------------
-# Visualization 2 – Most Popular Artists by Cumulative Listens
+# Visualization 2 – Most Popular Artists by Cumulative Listens (in Millions)
 # --------------------
-st.subheader("🔥 Most Popular Artists by Cumulative Listens")
+st.subheader("🔥 Most Popular Artists by Cumulative Listens (Millions)")
 st.markdown("This chart displays the top artists with the highest cumulative listens (views). Popularity is calculated across **all artists**, not limited to selected filters.")
 
-# Aggregate listens globally
+# Aggregate listens globally and convert to millions
 top_popular_artists = (
     data.groupby('artist')['views'].sum()
     .sort_values(ascending=False)
     .head(10)
+    .apply(lambda x: round(x / 1_000_000, 2))  # Convert to millions
 )
 
-st.bar_chart(top_popular_artists)
+# Reformat for Streamlit Bar Chart
+top_popular_df = pd.DataFrame({'Artist': top_popular_artists.index, 'Views (M)': top_popular_artists.values})
+st.bar_chart(top_popular_df.set_index('Artist'), use_container_width=True)
 
 
 # --------------------
