@@ -1,8 +1,6 @@
 import streamlit as st
 
-# -----------------------------------------------------
-# Must be the first Streamlit command in the entire app:
-# -----------------------------------------------------
+# Must be the first Streamlit command:
 st.set_page_config(layout="wide", page_title="Rock Lyrics Dashboard", page_icon="🎸")
 
 import pandas as pd
@@ -122,7 +120,6 @@ def main():
         This section dives deep into how two artists' styles contrast across different time periods.
         """)
         compare_artists(filtered_data)
-
 
 if __name__ == "__main__":
     main()
