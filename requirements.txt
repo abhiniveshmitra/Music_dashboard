@@ -6,6 +6,6 @@ wordcloud
 matplotlib
 gensim
 pyLDAvis
-spacy
 nltk
-scikit-learn
+spacy
+text2emotion
