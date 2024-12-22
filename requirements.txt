@@ -8,4 +8,4 @@ gensim
 pyLDAvis
 spacy
 nltk
-sklearn
+scikit-learn
