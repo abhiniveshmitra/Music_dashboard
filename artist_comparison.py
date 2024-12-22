@@ -42,18 +42,22 @@ def clean_word(w: str) -> str:
 
 # ---------- (1) FREQUENT WORDS ----------
 @st.cache_data
+@st.cache_data
 def get_most_frequent_words(data, artist, top_n=10):
     """
     Returns the top-n most frequent words for a given artist,
     ignoring words with length <5 and any in stop_words.
     """
     lyrics_series = data[data['artist'] == artist]['lyrics'].dropna()
-    combined = " ".join(lyrics_series.split())  # flatten newlines
+    # Combine all lyrics (rows) into one big string
+    combined = " ".join(lyrics_series.astype(str))  # <-- This fixes the error
+
+    # Now tokenize that big string
     raw_tokens = combined.split()
 
     cleaned_tokens = []
     for token in raw_tokens:
-        t = clean_word(token)
+        t = clean_word(token)  # remove punctuation, lowercase
         if len(t) >= 5 and t not in stop_words:
             cleaned_tokens.append(t)
 
