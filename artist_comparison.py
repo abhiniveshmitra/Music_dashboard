@@ -354,18 +354,7 @@ def compare_artists(data):
     # -----------------------------------
     # (B) POS Distribution
     # -----------------------------------
-    st.markdown("---")
-    st.markdown("### 📊 Part-of-Speech (POS) Distribution (Top 5)")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.write(f"**POS for {artist1}**")
-        df_pos_1 = pos_distribution_for_artist(data, artist1)
-        st.table(df_pos_1)
-
-    with c2:
-        st.write(f"**POS for {artist2}**")
-        df_pos_2 = pos_distribution_for_artist(data, artist2)
-        st.table(df_pos_2)
+   
 
     # -----------------------------------
     # (C) Top 5 Bigram Collocations
