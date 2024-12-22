@@ -1,14 +1,15 @@
 import streamlit as st
 import pandas as pd
+import re
 from collections import Counter
 from sentiment_analysis import analyze_sentiment
 import text2emotion as te
 from gensim.corpora import Dictionary
 from gensim.models import LdaModel
 
-# -----------------------------------------------------------------------------------
-# Expanded stopwords list to remove words like "all", "like", "down", "just", "got"...
-# -----------------------------------------------------------------------------------
+# ------------------------------------------
+# 1) STOPWORDS: includes filler words, etc.
+# ------------------------------------------
 stop_words = set([
     "the", "and", "is", "in", "it", "of", "to", "on", "that", "this", "for",
     "with", "as", "was", "at", "by", "from", "which", "an", "be", "or", "are",
@@ -16,21 +17,25 @@ stop_words = set([
     "she", "they", "we", "you", "your", "our", "my", "their", "its", "out", "not",
     "well,", "don't", "where", "never", "you're", "gonna", "going", "could",
     "about", "can't", "yeah,", "right", "every", "little", "you’re", "don’t", 
-    "ain’t", "can’t", "all", "like", "down", "just", "got", "her", "his", "i’m", 
-    "i'll", "i've", "i'd", "it’s", "one", "time", "will", "what", "come", "love", 
-    "wanna", "when", "more", "here", "there", "want"
+    "ain’t", "can’t", "all", "like", "down", "just", "got", "her", "his", "i’m",
+    "i'll", "i've", "i'd", "it’s", "one", "time", "will", "what", "come", "love",
+    "wanna", "when", "more", "here", "there", "want", "day", "man", "now"
 ])
 
+# ------------------------------------------------------
+# 2) FREQUENT WORDS: exclude words shorter than 5 chars
+# ------------------------------------------------------
 @st.cache_data
 def get_most_frequent_words(data, artist, top_n=10):
     """
-    Returns the top-n most frequent (non-stopword) words for a given artist.
+    Returns the top-n most frequent (non-stopword) words, 
+    ignoring words with length < 5.
     """
     artist_lyrics = " ".join(data[data['artist'] == artist]['lyrics'].dropna())
     words = artist_lyrics.split()
     filtered_words = [
         w.lower() for w in words 
-        if len(w) > 2 and w.lower() not in stop_words
+        if len(w) >= 5 and w.lower() not in stop_words
     ]
     counts = Counter(filtered_words).most_common(top_n)
     df = pd.DataFrame(counts, columns=['Word', 'Frequency'])
@@ -39,7 +44,7 @@ def get_most_frequent_words(data, artist, top_n=10):
 
 def get_filtered_top_songs_by_sentiment(data, artist, top_n=3):
     """
-    Returns top positive & negative songs (min 1000 views) for a given artist.
+    Returns top positive & negative songs (min 1000 views).
     """
     filtered_data = data[(data['artist'] == artist) & (data['views'] >= 1000)]
     if filtered_data.empty:
@@ -50,14 +55,14 @@ def get_filtered_top_songs_by_sentiment(data, artist, top_n=3):
     top_negative = filtered_data.sort_values(by='sentiment').head(top_n).reset_index(drop=True)
     return top_positive[['title','sentiment','views']], top_negative[['title','sentiment','views']]
 
-# -----------------------------------------------------------------------------------
-# Topic Modeling: Remove expanded stopwords & interpret each topic in a naive way
-# -----------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
+# 3) TOPIC MODELING: label "topics" with naive "emotions" instead of Topic 0,1,2...
+# --------------------------------------------------------------------------------
 @st.cache_data
 def get_topics_for_artist(data, artist, num_topics=5):
     """
     Use gensim LDA to get topics for an artist's combined lyrics.
-    Return top words for each discovered topic (excluding new stopwords).
+    Return list of (topicIndex, [(word, prob),...]).
     """
     artist_lyrics_list = data[data['artist'] == artist]['lyrics'].dropna().tolist()
 
@@ -65,7 +70,7 @@ def get_topics_for_artist(data, artist, num_topics=5):
     for lyric in artist_lyrics_list:
         lyric_tokens = [
             w.lower() for w in lyric.split()
-            if w.lower() not in stop_words and len(w) > 2
+            if w.lower() not in stop_words and len(w) >= 2
         ]
         tokens.append(lyric_tokens)
 
@@ -86,44 +91,59 @@ def get_topics_for_artist(data, artist, num_topics=5):
     except ValueError:
         return []
 
-    topics = lda_model.show_topics(num_topics=num_topics, num_words=5, formatted=False)
-    return topics
+    return lda_model.show_topics(num_topics=num_topics, num_words=5, formatted=False)
 
-def interpret_topics(topics):
+def guess_emotion_from_words(words):
     """
-    Return a list of (TopicLabel, TopWords, Interpretation) 
-    where 'Interpretation' is a naive guess based on the top words.
+    Naively guess an 'emotion' label based on presence of certain words.
+    Feel free to refine or expand the logic below.
     """
-    results = []
-    for topic_num, word_probs in topics:
-        # Extract just the words (ignore probabilities)
-        words = [wp[0] for wp in word_probs]
-        
-        # Basic interpretation logic (very naive)
-        # Check for certain keywords
-        if any(x in words for x in ["heart", "kiss", "romance"]):
-            meaning = "Likely a theme about love/relationships"
-        elif any(x in words for x in ["god", "lord", "soul"]):
-            meaning = "Possibly spiritual or religious"
-        elif any(x in words for x in ["night", "dream", "dark"]):
-            meaning = "Nightlife / dreaming / darker theme"
-        elif any(x in words for x in ["rock", "roll", "band"]):
-            meaning = "Rock or music references"
-        else:
-            meaning = "General / ambiguous"
-        
-        # Format the top words as a string
-        words_joined = ", ".join(words)
-        
-        topic_label = f"Topic {topic_num}"
-        results.append((topic_label, words_joined, meaning))
-    return results
+    # Lower them all
+    words_lower = set(w.lower() for w in words)
 
-@st.cache_data
+    # Some example words to detect
+    sad_words = {"cry", "sad", "tears", "alone", "lonely", "blue"}
+    happy_words = {"happy", "joy", "smile", "sunshine", "laugh"}
+    angry_words = {"anger", "rage", "hate", "mad"}
+    love_words = {"kiss", "heart", "love", "romance", "darling", "sweet"}
+    fear_words = {"fear", "scared", "afraid", "nightmare", "horror"}
+
+    # Simple checks in descending priority
+    if words_lower & love_words:
+        return "Love / Romance"
+    elif words_lower & happy_words:
+        return "Joy / Happiness"
+    elif words_lower & sad_words:
+        return "Sadness / Melancholy"
+    elif words_lower & angry_words:
+        return "Anger / Frustration"
+    elif words_lower & fear_words:
+        return "Fear / Darkness"
+    else:
+        return "General / ambiguous"
+
+def interpret_topics_as_emotions(topics):
+    """
+    Convert the LDA output (list of (topic_num, [(word, prob), ...]))
+    into a table of (EmotionLabel, TopWords).
+    """
+    result = []
+    for _, word_probs in topics:
+        # Extract top words only
+        top_words = [wp[0] for wp in word_probs]
+        # Guess an "emotion" from top words
+        emotion_label = guess_emotion_from_words(top_words)
+        words_joined = ", ".join(top_words)
+        result.append((emotion_label, words_joined))
+    return result
+
+# ------------------------------------------------------
+# 4) EMOTION DETECTION: remove caching, sanitize lyrics
+# ------------------------------------------------------
 def get_emotions_for_artist(data, artist):
     """
-    Aggregates text2emotion scores across all lyrics by the artist.
-    Returns top 3 emotions by percentage.
+    text2emotion can fail on certain unusual chars/emojis, 
+    so we sanitize. Then return top 3 emotions (percentage).
     """
     artist_lyrics_list = data[data['artist'] == artist]['lyrics'].dropna().tolist()
     if not artist_lyrics_list:
@@ -131,7 +151,10 @@ def get_emotions_for_artist(data, artist):
 
     cumulative_emotions = Counter()
     for lyric in artist_lyrics_list:
-        emotion_scores = te.get_emotion(lyric)
+        # Remove non-ASCII or potential trouble chars
+        clean_lyric = re.sub(r'[^\x00-\x7F]+',' ', lyric)
+        # Now get emotion
+        emotion_scores = te.get_emotion(clean_lyric)
         for emo, score in emotion_scores.items():
             cumulative_emotions[emo] += score
 
@@ -146,6 +169,9 @@ def get_emotions_for_artist(data, artist):
     emotion_percentages.sort(key=lambda x: x[1], reverse=True)
     return emotion_percentages[:3]
 
+# ------------------------------------------------------
+# 5) MAIN COMPARISON FUNCTION
+# ------------------------------------------------------
 def compare_artists(data):
     st.title("🎸 Artist Comparison")
 
@@ -206,7 +232,7 @@ def compare_artists(data):
     st.line_chart(sentiment_by_year, use_container_width=True)
 
     # --------------------
-    # Lexical Diversity Over Time
+    # Lexical Diversity
     # --------------------
     st.markdown("### 📚 Lexical Complexity Over Time (Yearly)")
     data['lexical_diversity'] = data['lyrics'].apply(
@@ -232,33 +258,33 @@ def compare_artists(data):
         st.table(freq2)
 
     # --------------------
-    # Topic Modeling
+    # Topic Modeling => Emotions
     # --------------------
     st.markdown("---")
-    st.markdown("### ✖️ Topic Modeling (5 Topics)")
+    st.markdown("### ❌ Topic Modeling (5 Topics)")
     col1, col2 = st.columns(2)
     topics1 = get_topics_for_artist(data, artist1, num_topics=5)
     topics2 = get_topics_for_artist(data, artist2, num_topics=5)
 
-    # Interpret topics & show in a table
-    explained1 = interpret_topics(topics1)
-    explained2 = interpret_topics(topics2)
+    # Convert raw LDA output into "emotion-labeled" table
+    explained1 = interpret_topics_as_emotions(topics1)
+    explained2 = interpret_topics_as_emotions(topics2)
 
     with col1:
         st.write(f"**Topics for {artist1}**")
         if explained1:
-            df1 = pd.DataFrame(explained1, columns=["Topic", "Top Words", "Likely Theme"])
+            df1 = pd.DataFrame(explained1, columns=["Emotion Label", "Top Words"])
             st.table(df1)
         else:
-            st.write("No significant topics found.")
+            st.write("No topics found.")
 
     with col2:
         st.write(f"**Topics for {artist2}**")
         if explained2:
-            df2 = pd.DataFrame(explained2, columns=["Topic", "Top Words", "Likely Theme"])
+            df2 = pd.DataFrame(explained2, columns=["Emotion Label", "Top Words"])
             st.table(df2)
         else:
-            st.write("No significant topics found.")
+            st.write("No topics found.")
 
     # --------------------
     # Emotion Detection
