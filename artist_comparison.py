@@ -3,6 +3,7 @@ import pandas as pd
 import subprocess
 import sys
 import spacy
+import os
 
 # --------------------
 # Ensure SpaCy and Model are Installed
@@ -13,9 +14,12 @@ def install_spacy():
     except OSError:
         st.warning("Downloading SpaCy model...")
         subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
-        
-        # Force link the model to avoid path errors
-        subprocess.run([sys.executable, "-m", "spacy", "link", "en_core_web_sm", "en_core_web_sm"])
+
+        # Force check and link model manually if not found
+        model_path = spacy.util.get_package_path("en_core_web_sm")
+        if model_path is None:
+            st.warning("Model path not found. Linking manually...")
+            subprocess.run([sys.executable, "-m", "spacy", "link", "en_core_web_sm", "en_core_web_sm"])
         
         nlp = spacy.load("en_core_web_sm")
         st.success("SpaCy model downloaded and linked successfully!")
