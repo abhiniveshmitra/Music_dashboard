@@ -3,7 +3,7 @@ import pandas as pd
 from loader import load_data
 from sentiment_analysis import search_sentiment_analysis, analyze_sentiment
 from artist_comparison import compare_artists
- python -m spacy download en_core_web_sm
+
 # --------------------
 # Page Configuration
 # --------------------
