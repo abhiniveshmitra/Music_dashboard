@@ -4,6 +4,9 @@ import pandas as pd
 
 @st.cache_data
 def analyze_sentiment(data):
+    """
+    Adds a 'sentiment' column to the dataframe (polarity from -1 to +1).
+    """
     if 'sentiment' not in data.columns:
         data['sentiment'] = data['lyrics'].apply(lambda x: TextBlob(str(x)).sentiment.polarity)
     return data
@@ -42,12 +45,12 @@ def search_sentiment_analysis(data):
     if 'sentiment' not in filtered_data.columns:
         filtered_data = analyze_sentiment(filtered_data)
 
-    # Average Sentiment Display
+    # Average Sentiment
     avg_sentiment = filtered_data['sentiment'].mean()
     st.write(f"**Average Sentiment for {artist_choice}:** {avg_sentiment:.2f}")
     explain_sentiment(avg_sentiment)
 
-    # Display Top Positive and Negative Songs
+    # Top Positive & Negative
     st.write("### 🎵 Top 3 Positive and Negative Songs")
     top_positive, top_negative = get_top_songs_by_sentiment(filtered_data, artist_choice)
 
