@@ -350,38 +350,6 @@ def compare_artists(data):
     # -----------------------------------
     # (A) Custom Emotion Lexicon
     # -----------------------------------
-    st.markdown("---")
-    st.markdown("### ❤️ Top 5 Emotions (Lexicon-Based)")
-    c1, c2 = st.columns(2)
-
-    emo_map_1 = find_emotions_for_artist(data, artist1)
-    emo_map_2 = find_emotions_for_artist(data, artist2)
-
-    with c1:
-        st.write(f"**Top Emotions for {artist1}**")
-        if emo_map_1:
-            # emo_map_1 => { emotion: (count, set_of_words), ... } in descending freq
-            items = list(emo_map_1.items())[:5]  # top 5
-            # Flatten into a small table
-            rows = []
-            for emotion, (cnt, words) in items:
-                rows.append((emotion, cnt, ", ".join(sorted(words))))
-            df_emo_1 = pd.DataFrame(rows, columns=["Emotion", "Count", "Trigger Words"])
-            st.table(df_emo_1)
-        else:
-            st.write("No emotions found (via custom lexicon).")
-
-    with c2:
-        st.write(f"**Top Emotions for {artist2}**")
-        if emo_map_2:
-            items = list(emo_map_2.items())[:5]
-            rows = []
-            for emotion, (cnt, words) in items:
-                rows.append((emotion, cnt, ", ".join(sorted(words))))
-            df_emo_2 = pd.DataFrame(rows, columns=["Emotion", "Count", "Trigger Words"])
-            st.table(df_emo_2)
-        else:
-            st.write("No emotions found (via custom lexicon).")
 
     # -----------------------------------
     # (B) POS Distribution
