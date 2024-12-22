@@ -1,3 +1,17 @@
+import nltk
+
+# Attempt to find 'punkt' & 'averaged_perceptron_tagger'.
+# If not found, quietly download them so NLTK can tokenize.
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', quiet=True)
+
+try:
+    nltk.data.find('taggers/averaged_perceptron_tagger')
+except LookupError:
+    nltk.download('averaged_perceptron_tagger', quiet=True)
+
 import streamlit as st
 import pandas as pd
 import re
