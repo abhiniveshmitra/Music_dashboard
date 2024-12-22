@@ -6,5 +6,5 @@ wordcloud
 matplotlib
 gensim
 pyLDAvis
-
+spacy
 nltk
