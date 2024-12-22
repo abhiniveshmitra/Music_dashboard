@@ -2,43 +2,51 @@ from sentiment_analysis import analyze_sentiment
 import streamlit as st
 import pandas as pd
 from collections import Counter
+import spacy
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
 
-# Stopwords List
-stop_words = set([
-    "the", "and", "is", "in", "it", "of", "to", "on", "that", "this", "for",
-    "with", "as", "was", "at", "by", "from", "which", "an", "be", "or", "are",
-    "but", "if", "then", "so", "such", "there", "has", "have", "had", "a", "he",
-    "she", "they", "we", "you", "your", "our", "my", "their", "its", "out", "not",
-    "well,", "don't", "where", "never", "you're", "gonna", "going", "could",
-    "about", "can't", "yeah,", "right", "every", "little", "you’re", "don’t", "ain’t", "can’t"
-])
+# Load SpaCy model
+nlp = spacy.load("en_core_web_sm")
 
-
-# Frequent Words Analysis (1-based indexing)
-def get_most_frequent_words(data, artist, top_n=10):
-    artist_lyrics = " ".join(data[data['artist'] == artist]['lyrics'].dropna())
-    words = artist_lyrics.split()
-    filtered_words = [word.lower() for word in words if len(word) > 4 and word.lower() not in stop_words]
-    most_common = Counter(filtered_words).most_common(top_n)
-    df = pd.DataFrame(most_common, columns=['Word', 'Frequency'])
-    df.index = df.index + 1  # 1-based indexing for frequent words only
-    return df
+# -------------------------
+# Named Entity Recognition (NER)
+# -------------------------
+@st.cache_data
+def extract_entities(data):
+    entities = []
+    for lyrics in data['lyrics'].dropna():
+        doc = nlp(lyrics)
+        entities.extend([ent.text for ent in doc.ents if ent.label_ in ['PERSON', 'GPE', 'ORG']])
+    return pd.Series(entities).value_counts().head(10)
 
 
-# Top Songs by Sentiment (Minimum Views Filter)
-def get_filtered_top_songs_by_sentiment(data, artist, top_n=3):
-    filtered_data = data[(data['artist'] == artist) & (data['views'] >= 1000)]
+def display_entities(data):
+    st.subheader("🔎 Named Entity Recognition – Key People and Places")
+    entities = extract_entities(data)
+    st.bar_chart(entities)
 
-    if filtered_data.empty:
-        return pd.DataFrame(columns=['title', 'sentiment', 'views']), pd.DataFrame(columns=['title', 'sentiment', 'views'])
+# -------------------------
+# Topic Modeling (LDA)
+# -------------------------
+@st.cache_data
+def perform_topic_modeling(data, num_topics=5):
+    vectorizer = CountVectorizer(max_df=0.85, min_df=2, stop_words='english')
+    dtm = vectorizer.fit_transform(data['lyrics'].dropna())
+    lda = LatentDirichletAllocation(n_components=num_topics, random_state=42)
+    lda.fit(dtm)
+    return lda, vectorizer.get_feature_names_out()
 
-    top_positive = filtered_data.sort_values(by='sentiment', ascending=False).head(top_n).reset_index(drop=True)
-    top_negative = filtered_data.sort_values(by='sentiment').head(top_n).reset_index(drop=True)
 
-    return top_positive[['title', 'sentiment', 'views']], top_negative[['title', 'sentiment', 'views']]
+def display_lda_topics(lda, feature_names, num_words=10):
+    st.subheader("📚 LDA Topic Modeling – Discover Themes in Lyrics")
+    for idx, topic in enumerate(lda.components_):
+        st.markdown(f"**Topic {idx + 1}:**")
+        st.write(", ".join([feature_names[i] for i in topic.argsort()[-num_words:]]))
 
-
-# Artist Comparison
+# -------------------------
+# Artist Comparison Section (Enhanced)
+# -------------------------
 def compare_artists(data):
     st.title("🎸 Artist Comparison")
 
@@ -96,3 +104,10 @@ def compare_artists(data):
     )
     lexical_by_year = data.groupby(['year', 'artist'])['lexical_diversity'].mean().unstack().fillna(0)
     st.line_chart(lexical_by_year, color=["#1E90FF", "#FFD700"])
+
+    # Named Entity Recognition (NER) Visualization
+    display_entities(data)
+
+    # Topic Modeling Visualization
+    lda_model, feature_names = perform_topic_modeling(data)
+    display_lda_topics(lda_model, feature_names)
