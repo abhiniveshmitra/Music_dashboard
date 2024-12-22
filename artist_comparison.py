@@ -6,27 +6,35 @@ import text2emotion as te
 from gensim.corpora import Dictionary
 from gensim.models import LdaModel
 
-# Stopwords List
+# -----------------------------------------------------------------------------------
+# Expanded stopwords list to remove words like "all", "like", "down", "just", "got"...
+# -----------------------------------------------------------------------------------
 stop_words = set([
     "the", "and", "is", "in", "it", "of", "to", "on", "that", "this", "for",
     "with", "as", "was", "at", "by", "from", "which", "an", "be", "or", "are",
     "but", "if", "then", "so", "such", "there", "has", "have", "had", "a", "he",
     "she", "they", "we", "you", "your", "our", "my", "their", "its", "out", "not",
     "well,", "don't", "where", "never", "you're", "gonna", "going", "could",
-    "about", "can't", "yeah,", "right", "every", "little", "you’re", "don’t", "ain’t", "can’t"
+    "about", "can't", "yeah,", "right", "every", "little", "you’re", "don’t", 
+    "ain’t", "can’t", "all", "like", "down", "just", "got", "her", "his", "i’m", 
+    "i'll", "i've", "i'd", "it’s", "one", "time", "will", "what", "come", "love", 
+    "wanna", "when", "more", "here", "there", "want"
 ])
 
 @st.cache_data
 def get_most_frequent_words(data, artist, top_n=10):
     """
-    Returns the top-n most frequent words for a given artist.
+    Returns the top-n most frequent (non-stopword) words for a given artist.
     """
     artist_lyrics = " ".join(data[data['artist'] == artist]['lyrics'].dropna())
     words = artist_lyrics.split()
-    filtered_words = [w.lower() for w in words if len(w) > 4 and w.lower() not in stop_words]
+    filtered_words = [
+        w.lower() for w in words 
+        if len(w) > 2 and w.lower() not in stop_words
+    ]
     counts = Counter(filtered_words).most_common(top_n)
     df = pd.DataFrame(counts, columns=['Word', 'Frequency'])
-    df.index = df.index + 1  # 1-based indexing
+    df.index = df.index + 1
     return df
 
 def get_filtered_top_songs_by_sentiment(data, artist, top_n=3):
@@ -35,22 +43,24 @@ def get_filtered_top_songs_by_sentiment(data, artist, top_n=3):
     """
     filtered_data = data[(data['artist'] == artist) & (data['views'] >= 1000)]
     if filtered_data.empty:
-        return pd.DataFrame(columns=['title', 'sentiment', 'views']), pd.DataFrame(columns=['title', 'sentiment', 'views'])
+        return (pd.DataFrame(columns=['title','sentiment','views']),
+                pd.DataFrame(columns=['title','sentiment','views']))
 
     top_positive = filtered_data.sort_values(by='sentiment', ascending=False).head(top_n).reset_index(drop=True)
     top_negative = filtered_data.sort_values(by='sentiment').head(top_n).reset_index(drop=True)
+    return top_positive[['title','sentiment','views']], top_negative[['title','sentiment','views']]
 
-    return top_positive[['title', 'sentiment', 'views']], top_negative[['title', 'sentiment', 'views']]
-
+# -----------------------------------------------------------------------------------
+# Topic Modeling: Remove expanded stopwords & interpret each topic in a naive way
+# -----------------------------------------------------------------------------------
 @st.cache_data
 def get_topics_for_artist(data, artist, num_topics=5):
     """
     Use gensim LDA to get topics for an artist's combined lyrics.
-    Return top words for each discovered topic.
+    Return top words for each discovered topic (excluding new stopwords).
     """
     artist_lyrics_list = data[data['artist'] == artist]['lyrics'].dropna().tolist()
 
-    # Tokenize
     tokens = []
     for lyric in artist_lyrics_list:
         lyric_tokens = [
@@ -77,12 +87,37 @@ def get_topics_for_artist(data, artist, num_topics=5):
         return []
 
     topics = lda_model.show_topics(num_topics=num_topics, num_words=5, formatted=False)
-    topic_list = []
-    for topic_num, word_probs in topics:
-        words_only = [wp[0] for wp in word_probs]
-        topic_list.append((f"Topic {topic_num}", words_only))
+    return topics
 
-    return topic_list
+def interpret_topics(topics):
+    """
+    Return a list of (TopicLabel, TopWords, Interpretation) 
+    where 'Interpretation' is a naive guess based on the top words.
+    """
+    results = []
+    for topic_num, word_probs in topics:
+        # Extract just the words (ignore probabilities)
+        words = [wp[0] for wp in word_probs]
+        
+        # Basic interpretation logic (very naive)
+        # Check for certain keywords
+        if any(x in words for x in ["heart", "kiss", "romance"]):
+            meaning = "Likely a theme about love/relationships"
+        elif any(x in words for x in ["god", "lord", "soul"]):
+            meaning = "Possibly spiritual or religious"
+        elif any(x in words for x in ["night", "dream", "dark"]):
+            meaning = "Nightlife / dreaming / darker theme"
+        elif any(x in words for x in ["rock", "roll", "band"]):
+            meaning = "Rock or music references"
+        else:
+            meaning = "General / ambiguous"
+        
+        # Format the top words as a string
+        words_joined = ", ".join(words)
+        
+        topic_label = f"Topic {topic_num}"
+        results.append((topic_label, words_joined, meaning))
+    return results
 
 @st.cache_data
 def get_emotions_for_artist(data, artist):
@@ -104,7 +139,10 @@ def get_emotions_for_artist(data, artist):
         return []
 
     total = sum(cumulative_emotions.values())
-    emotion_percentages = [(emo, round((val / total) * 100, 2)) for emo, val in cumulative_emotions.items()]
+    emotion_percentages = [
+        (emo, round((val / total) * 100, 2))
+        for emo, val in cumulative_emotions.items()
+    ]
     emotion_percentages.sort(key=lambda x: x[1], reverse=True)
     return emotion_percentages[:3]
 
@@ -140,7 +178,7 @@ def compare_artists(data):
         st.table(popular_songs[popular_songs['artist'] == artist2][['title', 'views']])
 
     # --------------------
-    # Top Positive/Negative Songs
+    # Top Positive/Negative
     # --------------------
     st.markdown("### 🎵 Top Positive and Negative Songs (Min. 1000 Views)")
     pos1, neg1 = get_filtered_top_songs_by_sentiment(data, artist1)
@@ -178,7 +216,7 @@ def compare_artists(data):
     st.line_chart(lexical_by_year, use_container_width=True)
 
     # --------------------
-    # Frequent Words (Optional Showcase)
+    # Frequent Words
     # --------------------
     st.markdown("---")
     st.markdown("### 💬 Top 10 Frequent Words")
@@ -194,29 +232,33 @@ def compare_artists(data):
         st.table(freq2)
 
     # --------------------
-    # Topic Modeling (5 Topics)
+    # Topic Modeling
     # --------------------
     st.markdown("---")
-    st.markdown("### 🧩 Topic Modeling (5 Topics)")
+    st.markdown("### ✖️ Topic Modeling (5 Topics)")
     col1, col2 = st.columns(2)
     topics1 = get_topics_for_artist(data, artist1, num_topics=5)
     topics2 = get_topics_for_artist(data, artist2, num_topics=5)
 
+    # Interpret topics & show in a table
+    explained1 = interpret_topics(topics1)
+    explained2 = interpret_topics(topics2)
+
     with col1:
         st.write(f"**Topics for {artist1}**")
-        if topics1:
-            for topic_label, words in topics1:
-                st.write(f"{topic_label}: {', '.join(words)}")
+        if explained1:
+            df1 = pd.DataFrame(explained1, columns=["Topic", "Top Words", "Likely Theme"])
+            st.table(df1)
         else:
-            st.write("Not enough data or no topics found.")
+            st.write("No significant topics found.")
 
     with col2:
         st.write(f"**Topics for {artist2}**")
-        if topics2:
-            for topic_label, words in topics2:
-                st.write(f"{topic_label}: {', '.join(words)}")
+        if explained2:
+            df2 = pd.DataFrame(explained2, columns=["Topic", "Top Words", "Likely Theme"])
+            st.table(df2)
         else:
-            st.write("Not enough data or no topics found.")
+            st.write("No significant topics found.")
 
     # --------------------
     # Emotion Detection
