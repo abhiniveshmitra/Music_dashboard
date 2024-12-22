@@ -7,5 +7,4 @@ matplotlib
 gensim
 pyLDAvis
 nltk
-spacy
 text2emotion
