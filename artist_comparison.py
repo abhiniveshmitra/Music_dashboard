@@ -2,7 +2,7 @@ from sentiment_analysis import analyze_sentiment
 import streamlit as st
 import pandas as pd
 from collections import Counter
-import spacy
+
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 
