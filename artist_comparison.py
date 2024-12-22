@@ -1,19 +1,38 @@
-from sentiment_analysis import analyze_sentiment
 import streamlit as st
 import pandas as pd
-from collections import Counter
+import subprocess
+import sys
 import spacy
+
+# --------------------
+# Ensure SpaCy and Model are Installed
+# --------------------
+def install_spacy():
+    try:
+        nlp = spacy.load("en_core_web_sm")
+    except OSError:
+        st.warning("Downloading SpaCy model...")
+        subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
+        
+        # Force link the model to avoid path errors
+        subprocess.run([sys.executable, "-m", "spacy", "link", "en_core_web_sm", "en_core_web_sm"])
+        
+        nlp = spacy.load("en_core_web_sm")
+        st.success("SpaCy model downloaded and linked successfully!")
+
+install_spacy()
+
+from sentiment_analysis import analyze_sentiment
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
-
-# Load SpaCy model
-nlp = spacy.load("en_core_web_sm")
+from collections import Counter
 
 # -------------------------
 # Named Entity Recognition (NER)
 # -------------------------
 @st.cache_data
 def extract_entities(data):
+    nlp = spacy.load("en_core_web_sm")
     entities = []
     for lyrics in data['lyrics'].dropna():
         doc = nlp(lyrics)
@@ -70,40 +89,6 @@ def compare_artists(data):
     with col2:
         st.markdown(f"**Most Popular Songs by {artist2}**")
         st.table(popular_songs[popular_songs['artist'] == artist2][['title', 'views']])
-
-    # Top Positive/Negative Songs
-    st.markdown("### 🎵 Top Positive and Negative Songs (Min. 1000 Views)")
-    pos1, neg1 = get_filtered_top_songs_by_sentiment(data, artist1)
-    pos2, neg2 = get_filtered_top_songs_by_sentiment(data, artist2)
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown(f"**Top Positive Songs by {artist1}**")
-        st.table(pos1)
-        st.markdown(f"**Top Negative Songs by {artist1}**")
-        st.table(neg1)
-
-    with col2:
-        st.markdown(f"**Top Positive Songs by {artist2}**")
-        st.table(pos2)
-        st.markdown(f"**Top Negative Songs by {artist2}**")
-        st.table(neg2)
-
-    # Graph Section
-    st.markdown("---")
-
-    # Sentiment Over Time (Yearly)
-    st.markdown("### 📈 Sentiment Over Time (Yearly)")
-    sentiment_by_year = data.groupby(['year', 'artist'])['sentiment'].mean().unstack().fillna(0)
-    st.line_chart(sentiment_by_year, color=["#FF5733", "#4B0082"])
-
-    # Lexical Complexity Over Time (Yearly)
-    st.markdown("### 📚 Lexical Complexity Over Time (Yearly)")
-    data['lexical_diversity'] = data['lyrics'].apply(
-        lambda x: len(set(str(x).split())) / len(str(x).split())
-    )
-    lexical_by_year = data.groupby(['year', 'artist'])['lexical_diversity'].mean().unstack().fillna(0)
-    st.line_chart(lexical_by_year, color=["#1E90FF", "#FFD700"])
 
     # Named Entity Recognition (NER) Visualization
     display_entities(data)
