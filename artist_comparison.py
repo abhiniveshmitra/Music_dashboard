@@ -359,15 +359,4 @@ def compare_artists(data):
     # -----------------------------------
     # (C) Top 5 Bigram Collocations
     # -----------------------------------
-    st.markdown("---")
-    st.markdown("### 🔗 Top 5 Bigram Collocations")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.write(f"**Bigrams for {artist1}**")
-        df_bi_1 = top_bigrams_for_artist(data, artist1, top_n=5)
-        st.table(df_bi_1)
-
-    with c2:
-        st.write(f"**Bigrams for {artist2}**")
-        df_bi_2 = top_bigrams_for_artist(data, artist2, top_n=5)
-        st.table(df_bi_2)
+   
