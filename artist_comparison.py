@@ -321,32 +321,7 @@ def compare_artists(data):
     # -----------------------------------
     # Topic Modeling => "Unknown" labels
     # -----------------------------------
-    st.markdown("---")
-    st.markdown("### ❌ Topic Modeling (5 Topics)")
-    c1, c2 = st.columns(2)
-
-    raw_topics1 = get_topics_for_artist(data, artist1, num_topics=5)
-    raw_topics2 = get_topics_for_artist(data, artist2, num_topics=5)
-
-    explained1 = interpret_topics_as_emotions(raw_topics1)
-    explained2 = interpret_topics_as_emotions(raw_topics2)
-
-    with c1:
-        st.write(f"**Topics for {artist1}**")
-        if explained1:
-            df1 = pd.DataFrame(explained1, columns=["Label", "Top Words"])
-            st.table(df1)
-        else:
-            st.write("No topics found.")
-
-    with c2:
-        st.write(f"**Topics for {artist2}**")
-        if explained2:
-            df2 = pd.DataFrame(explained2, columns=["Label", "Top Words"])
-            st.table(df2)
-        else:
-            st.write("No topics found.")
-
+    
     # -----------------------------------
     # (A) Custom Emotion Lexicon
     # -----------------------------------
